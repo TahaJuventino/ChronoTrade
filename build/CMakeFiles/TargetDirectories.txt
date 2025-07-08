@@ -1,3 +1,8 @@
 C:/Users/PC/Desktop/Projects/ChronoTrade/build/CMakeFiles/ChronoTrade.dir
+C:/Users/PC/Desktop/Projects/ChronoTrade/build/CMakeFiles/test_order.dir
+C:/Users/PC/Desktop/Projects/ChronoTrade/build/CMakeFiles/test_csv_parser.dir
+C:/Users/PC/Desktop/Projects/ChronoTrade/build/CMakeFiles/test_candlestick.dir
+C:/Users/PC/Desktop/Projects/ChronoTrade/build/CMakeFiles/test_order_book.dir
+C:/Users/PC/Desktop/Projects/ChronoTrade/build/CMakeFiles/test_candlestick_generator.dir
 C:/Users/PC/Desktop/Projects/ChronoTrade/build/CMakeFiles/edit_cache.dir
 C:/Users/PC/Desktop/Projects/ChronoTrade/build/CMakeFiles/rebuild_cache.dir

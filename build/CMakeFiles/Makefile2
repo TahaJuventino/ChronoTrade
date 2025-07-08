@@ -63,10 +63,20 @@ CMAKE_BINARY_DIR = C:\Users\PC\Desktop\Projects\ChronoTrade\build
 
 # The main recursive "all" target.
 all: CMakeFiles/ChronoTrade.dir/all
+all: CMakeFiles/test_order.dir/all
+all: CMakeFiles/test_csv_parser.dir/all
+all: CMakeFiles/test_candlestick.dir/all
+all: CMakeFiles/test_order_book.dir/all
+all: CMakeFiles/test_candlestick_generator.dir/all
 .PHONY : all
 
 # The main recursive "codegen" target.
 codegen: CMakeFiles/ChronoTrade.dir/codegen
+codegen: CMakeFiles/test_order.dir/codegen
+codegen: CMakeFiles/test_csv_parser.dir/codegen
+codegen: CMakeFiles/test_candlestick.dir/codegen
+codegen: CMakeFiles/test_order_book.dir/codegen
+codegen: CMakeFiles/test_candlestick_generator.dir/codegen
 .PHONY : codegen
 
 # The main recursive "preinstall" target.
@@ -75,6 +85,11 @@ preinstall:
 
 # The main recursive "clean" target.
 clean: CMakeFiles/ChronoTrade.dir/clean
+clean: CMakeFiles/test_order.dir/clean
+clean: CMakeFiles/test_csv_parser.dir/clean
+clean: CMakeFiles/test_candlestick.dir/clean
+clean: CMakeFiles/test_order_book.dir/clean
+clean: CMakeFiles/test_candlestick_generator.dir/clean
 .PHONY : clean
 
 #=============================================================================
@@ -108,6 +123,166 @@ CMakeFiles/ChronoTrade.dir/codegen:
 CMakeFiles/ChronoTrade.dir/clean:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\ChronoTrade.dir\build.make CMakeFiles/ChronoTrade.dir/clean
 .PHONY : CMakeFiles/ChronoTrade.dir/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/test_order.dir
+
+# All Build rule for target.
+CMakeFiles/test_order.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_order.dir\build.make CMakeFiles/test_order.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_order.dir\build.make CMakeFiles/test_order.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=C:\Users\PC\Desktop\Projects\ChronoTrade\build\CMakeFiles --progress-num=9,10 "Built target test_order"
+.PHONY : CMakeFiles/test_order.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/test_order.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start C:\Users\PC\Desktop\Projects\ChronoTrade\build\CMakeFiles 2
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 CMakeFiles/test_order.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start C:\Users\PC\Desktop\Projects\ChronoTrade\build\CMakeFiles 0
+.PHONY : CMakeFiles/test_order.dir/rule
+
+# Convenience name for target.
+test_order: CMakeFiles/test_order.dir/rule
+.PHONY : test_order
+
+# codegen rule for target.
+CMakeFiles/test_order.dir/codegen:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_order.dir\build.make CMakeFiles/test_order.dir/codegen
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=C:\Users\PC\Desktop\Projects\ChronoTrade\build\CMakeFiles --progress-num=9,10 "Finished codegen for target test_order"
+.PHONY : CMakeFiles/test_order.dir/codegen
+
+# clean rule for target.
+CMakeFiles/test_order.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_order.dir\build.make CMakeFiles/test_order.dir/clean
+.PHONY : CMakeFiles/test_order.dir/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/test_csv_parser.dir
+
+# All Build rule for target.
+CMakeFiles/test_csv_parser.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_csv_parser.dir\build.make CMakeFiles/test_csv_parser.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_csv_parser.dir\build.make CMakeFiles/test_csv_parser.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=C:\Users\PC\Desktop\Projects\ChronoTrade\build\CMakeFiles --progress-num=7,8 "Built target test_csv_parser"
+.PHONY : CMakeFiles/test_csv_parser.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/test_csv_parser.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start C:\Users\PC\Desktop\Projects\ChronoTrade\build\CMakeFiles 2
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 CMakeFiles/test_csv_parser.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start C:\Users\PC\Desktop\Projects\ChronoTrade\build\CMakeFiles 0
+.PHONY : CMakeFiles/test_csv_parser.dir/rule
+
+# Convenience name for target.
+test_csv_parser: CMakeFiles/test_csv_parser.dir/rule
+.PHONY : test_csv_parser
+
+# codegen rule for target.
+CMakeFiles/test_csv_parser.dir/codegen:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_csv_parser.dir\build.make CMakeFiles/test_csv_parser.dir/codegen
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=C:\Users\PC\Desktop\Projects\ChronoTrade\build\CMakeFiles --progress-num=7,8 "Finished codegen for target test_csv_parser"
+.PHONY : CMakeFiles/test_csv_parser.dir/codegen
+
+# clean rule for target.
+CMakeFiles/test_csv_parser.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_csv_parser.dir\build.make CMakeFiles/test_csv_parser.dir/clean
+.PHONY : CMakeFiles/test_csv_parser.dir/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/test_candlestick.dir
+
+# All Build rule for target.
+CMakeFiles/test_candlestick.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_candlestick.dir\build.make CMakeFiles/test_candlestick.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_candlestick.dir\build.make CMakeFiles/test_candlestick.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=C:\Users\PC\Desktop\Projects\ChronoTrade\build\CMakeFiles --progress-num=3,4 "Built target test_candlestick"
+.PHONY : CMakeFiles/test_candlestick.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/test_candlestick.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start C:\Users\PC\Desktop\Projects\ChronoTrade\build\CMakeFiles 2
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 CMakeFiles/test_candlestick.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start C:\Users\PC\Desktop\Projects\ChronoTrade\build\CMakeFiles 0
+.PHONY : CMakeFiles/test_candlestick.dir/rule
+
+# Convenience name for target.
+test_candlestick: CMakeFiles/test_candlestick.dir/rule
+.PHONY : test_candlestick
+
+# codegen rule for target.
+CMakeFiles/test_candlestick.dir/codegen:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_candlestick.dir\build.make CMakeFiles/test_candlestick.dir/codegen
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=C:\Users\PC\Desktop\Projects\ChronoTrade\build\CMakeFiles --progress-num=3,4 "Finished codegen for target test_candlestick"
+.PHONY : CMakeFiles/test_candlestick.dir/codegen
+
+# clean rule for target.
+CMakeFiles/test_candlestick.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_candlestick.dir\build.make CMakeFiles/test_candlestick.dir/clean
+.PHONY : CMakeFiles/test_candlestick.dir/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/test_order_book.dir
+
+# All Build rule for target.
+CMakeFiles/test_order_book.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_order_book.dir\build.make CMakeFiles/test_order_book.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_order_book.dir\build.make CMakeFiles/test_order_book.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=C:\Users\PC\Desktop\Projects\ChronoTrade\build\CMakeFiles --progress-num=11,12 "Built target test_order_book"
+.PHONY : CMakeFiles/test_order_book.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/test_order_book.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start C:\Users\PC\Desktop\Projects\ChronoTrade\build\CMakeFiles 2
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 CMakeFiles/test_order_book.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start C:\Users\PC\Desktop\Projects\ChronoTrade\build\CMakeFiles 0
+.PHONY : CMakeFiles/test_order_book.dir/rule
+
+# Convenience name for target.
+test_order_book: CMakeFiles/test_order_book.dir/rule
+.PHONY : test_order_book
+
+# codegen rule for target.
+CMakeFiles/test_order_book.dir/codegen:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_order_book.dir\build.make CMakeFiles/test_order_book.dir/codegen
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=C:\Users\PC\Desktop\Projects\ChronoTrade\build\CMakeFiles --progress-num=11,12 "Finished codegen for target test_order_book"
+.PHONY : CMakeFiles/test_order_book.dir/codegen
+
+# clean rule for target.
+CMakeFiles/test_order_book.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_order_book.dir\build.make CMakeFiles/test_order_book.dir/clean
+.PHONY : CMakeFiles/test_order_book.dir/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/test_candlestick_generator.dir
+
+# All Build rule for target.
+CMakeFiles/test_candlestick_generator.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_candlestick_generator.dir\build.make CMakeFiles/test_candlestick_generator.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_candlestick_generator.dir\build.make CMakeFiles/test_candlestick_generator.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=C:\Users\PC\Desktop\Projects\ChronoTrade\build\CMakeFiles --progress-num=5,6 "Built target test_candlestick_generator"
+.PHONY : CMakeFiles/test_candlestick_generator.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/test_candlestick_generator.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start C:\Users\PC\Desktop\Projects\ChronoTrade\build\CMakeFiles 2
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 CMakeFiles/test_candlestick_generator.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start C:\Users\PC\Desktop\Projects\ChronoTrade\build\CMakeFiles 0
+.PHONY : CMakeFiles/test_candlestick_generator.dir/rule
+
+# Convenience name for target.
+test_candlestick_generator: CMakeFiles/test_candlestick_generator.dir/rule
+.PHONY : test_candlestick_generator
+
+# codegen rule for target.
+CMakeFiles/test_candlestick_generator.dir/codegen:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_candlestick_generator.dir\build.make CMakeFiles/test_candlestick_generator.dir/codegen
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=C:\Users\PC\Desktop\Projects\ChronoTrade\build\CMakeFiles --progress-num=5,6 "Finished codegen for target test_candlestick_generator"
+.PHONY : CMakeFiles/test_candlestick_generator.dir/codegen
+
+# clean rule for target.
+CMakeFiles/test_candlestick_generator.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_candlestick_generator.dir\build.make CMakeFiles/test_candlestick_generator.dir/clean
+.PHONY : CMakeFiles/test_candlestick_generator.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.

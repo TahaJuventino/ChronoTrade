@@ -9,27 +9,26 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(Threads REQUIRED)
 
-# Git commit hash injection (must come early)
+# ========== GIT COMMIT HASH INJECTION ==========
+
 execute_process(
   COMMAND git rev-parse --short HEAD
   OUTPUT_VARIABLE GIT_COMMIT_HASH
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
-add_compile_definitions(BUILD_HASH="${GIT_COMMIT_HASH}")
-add_compile_definitions(BUILD_HASH=\"${GIT_COMMIT_HASH}\")
 
-# Gather sources
-file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
+add_compile_definitions(BUILD_HASH="${GIT_COMMIT_HASH}")
+
+# ========== MAIN APP ==========
+
+file(GLOB_RECURSE CORE_SRC CONFIGURE_DEPENDS
     "core/*.cpp" "engine/*.cpp" "feed/*.cpp"
     "threads/*.cpp" "plot/*.cpp" "strategy/*.cpp"
-    "event/*.cpp" "security/*.cpp" "tests/*.cpp"
-    "utils/*.cpp" "main.cpp"
+    "event/*.cpp" "security/*.cpp" "utils/*.cpp"
 )
 
-# Define target
-add_executable(ChronoTrade ${SRC_FILES})
+add_executable(ChronoTrade ${CORE_SRC} main.cpp)
 
-# Compile flags
 target_compile_options(ChronoTrade PRIVATE
   -Wall -Wextra -Werror -pedantic
   -fstack-protector-strong
@@ -37,12 +36,41 @@ target_compile_options(ChronoTrade PRIVATE
   -fno-omit-frame-pointer
 )
 
-# Link libraries
 target_link_libraries(ChronoTrade PRIVATE Threads::Threads)
 
-# Include paths
 target_include_directories(ChronoTrade PRIVATE
   ${PROJECT_SOURCE_DIR}/core
   ${PROJECT_SOURCE_DIR}/utils
   ${PROJECT_SOURCE_DIR}/security
 )
+
+
+# ========== GTEST-BASED TESTS ==========
+
+# Find GoogleTest if available (MSYS2: pacman -S mingw-w64-x86_64-gtest)
+find_package(GTest REQUIRED)
+
+# Add gTest test: test_order_gtest
+add_executable(test_order tests/test_order.cpp)
+target_link_libraries(test_order PRIVATE GTest::gtest GTest::gtest_main)
+target_include_directories(test_order PRIVATE ${PROJECT_SOURCE_DIR}/core)
+
+# Add gTest test: test_csv_parser
+add_executable(test_csv_parser tests/test_csv_parser.cpp)
+target_link_libraries(test_csv_parser PRIVATE GTest::gtest GTest::gtest_main)
+target_include_directories(test_csv_parser PRIVATE ${PROJECT_SOURCE_DIR}/core ${PROJECT_SOURCE_DIR}/feed)
+
+# Add gTest test: test_candlestick
+add_executable(test_candlestick tests/test_candlestick.cpp)
+target_link_libraries(test_candlestick PRIVATE GTest::gtest GTest::gtest_main)
+target_include_directories(test_candlestick PRIVATE ${PROJECT_SOURCE_DIR}/core)
+
+# Add gTest test: test_order_book
+add_executable(test_order_book tests/test_order_book.cpp)
+target_link_libraries(test_order_book PRIVATE GTest::gtest GTest::gtest_main)
+target_include_directories(test_order_book PRIVATE ${PROJECT_SOURCE_DIR}/core)
+
+# Add gTest test: test_candlestick_generator
+add_executable(test_candlestick_generator tests/test_candlestick_generator.cpp)
+target_link_libraries(test_candlestick_generator PRIVATE GTest::gtest GTest::gtest_main)
+target_include_directories(test_candlestick_generator PRIVATE ${PROJECT_SOURCE_DIR}/core ${PROJECT_SOURCE_DIR}/engine)

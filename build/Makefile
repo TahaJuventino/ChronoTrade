@@ -129,6 +129,71 @@ ChronoTrade/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\ChronoTrade.dir\build.make CMakeFiles/ChronoTrade.dir/build
 .PHONY : ChronoTrade/fast
 
+#=============================================================================
+# Target rules for targets named test_order
+
+# Build rule for target.
+test_order: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 test_order
+.PHONY : test_order
+
+# fast build rule for target.
+test_order/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_order.dir\build.make CMakeFiles/test_order.dir/build
+.PHONY : test_order/fast
+
+#=============================================================================
+# Target rules for targets named test_csv_parser
+
+# Build rule for target.
+test_csv_parser: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 test_csv_parser
+.PHONY : test_csv_parser
+
+# fast build rule for target.
+test_csv_parser/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_csv_parser.dir\build.make CMakeFiles/test_csv_parser.dir/build
+.PHONY : test_csv_parser/fast
+
+#=============================================================================
+# Target rules for targets named test_candlestick
+
+# Build rule for target.
+test_candlestick: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 test_candlestick
+.PHONY : test_candlestick
+
+# fast build rule for target.
+test_candlestick/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_candlestick.dir\build.make CMakeFiles/test_candlestick.dir/build
+.PHONY : test_candlestick/fast
+
+#=============================================================================
+# Target rules for targets named test_order_book
+
+# Build rule for target.
+test_order_book: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 test_order_book
+.PHONY : test_order_book
+
+# fast build rule for target.
+test_order_book/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_order_book.dir\build.make CMakeFiles/test_order_book.dir/build
+.PHONY : test_order_book/fast
+
+#=============================================================================
+# Target rules for targets named test_candlestick_generator
+
+# Build rule for target.
+test_candlestick_generator: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 test_candlestick_generator
+.PHONY : test_candlestick_generator
+
+# fast build rule for target.
+test_candlestick_generator/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_candlestick_generator.dir\build.make CMakeFiles/test_candlestick_generator.dir/build
+.PHONY : test_candlestick_generator/fast
+
 main.obj: main.cpp.obj
 .PHONY : main.obj
 
@@ -153,6 +218,126 @@ main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\ChronoTrade.dir\build.make CMakeFiles/ChronoTrade.dir/main.cpp.s
 .PHONY : main.cpp.s
 
+tests/test_candlestick.obj: tests/test_candlestick.cpp.obj
+.PHONY : tests/test_candlestick.obj
+
+# target to build an object file
+tests/test_candlestick.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_candlestick.dir\build.make CMakeFiles/test_candlestick.dir/tests/test_candlestick.cpp.obj
+.PHONY : tests/test_candlestick.cpp.obj
+
+tests/test_candlestick.i: tests/test_candlestick.cpp.i
+.PHONY : tests/test_candlestick.i
+
+# target to preprocess a source file
+tests/test_candlestick.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_candlestick.dir\build.make CMakeFiles/test_candlestick.dir/tests/test_candlestick.cpp.i
+.PHONY : tests/test_candlestick.cpp.i
+
+tests/test_candlestick.s: tests/test_candlestick.cpp.s
+.PHONY : tests/test_candlestick.s
+
+# target to generate assembly for a file
+tests/test_candlestick.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_candlestick.dir\build.make CMakeFiles/test_candlestick.dir/tests/test_candlestick.cpp.s
+.PHONY : tests/test_candlestick.cpp.s
+
+tests/test_candlestick_generator.obj: tests/test_candlestick_generator.cpp.obj
+.PHONY : tests/test_candlestick_generator.obj
+
+# target to build an object file
+tests/test_candlestick_generator.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_candlestick_generator.dir\build.make CMakeFiles/test_candlestick_generator.dir/tests/test_candlestick_generator.cpp.obj
+.PHONY : tests/test_candlestick_generator.cpp.obj
+
+tests/test_candlestick_generator.i: tests/test_candlestick_generator.cpp.i
+.PHONY : tests/test_candlestick_generator.i
+
+# target to preprocess a source file
+tests/test_candlestick_generator.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_candlestick_generator.dir\build.make CMakeFiles/test_candlestick_generator.dir/tests/test_candlestick_generator.cpp.i
+.PHONY : tests/test_candlestick_generator.cpp.i
+
+tests/test_candlestick_generator.s: tests/test_candlestick_generator.cpp.s
+.PHONY : tests/test_candlestick_generator.s
+
+# target to generate assembly for a file
+tests/test_candlestick_generator.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_candlestick_generator.dir\build.make CMakeFiles/test_candlestick_generator.dir/tests/test_candlestick_generator.cpp.s
+.PHONY : tests/test_candlestick_generator.cpp.s
+
+tests/test_csv_parser.obj: tests/test_csv_parser.cpp.obj
+.PHONY : tests/test_csv_parser.obj
+
+# target to build an object file
+tests/test_csv_parser.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_csv_parser.dir\build.make CMakeFiles/test_csv_parser.dir/tests/test_csv_parser.cpp.obj
+.PHONY : tests/test_csv_parser.cpp.obj
+
+tests/test_csv_parser.i: tests/test_csv_parser.cpp.i
+.PHONY : tests/test_csv_parser.i
+
+# target to preprocess a source file
+tests/test_csv_parser.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_csv_parser.dir\build.make CMakeFiles/test_csv_parser.dir/tests/test_csv_parser.cpp.i
+.PHONY : tests/test_csv_parser.cpp.i
+
+tests/test_csv_parser.s: tests/test_csv_parser.cpp.s
+.PHONY : tests/test_csv_parser.s
+
+# target to generate assembly for a file
+tests/test_csv_parser.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_csv_parser.dir\build.make CMakeFiles/test_csv_parser.dir/tests/test_csv_parser.cpp.s
+.PHONY : tests/test_csv_parser.cpp.s
+
+tests/test_order.obj: tests/test_order.cpp.obj
+.PHONY : tests/test_order.obj
+
+# target to build an object file
+tests/test_order.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_order.dir\build.make CMakeFiles/test_order.dir/tests/test_order.cpp.obj
+.PHONY : tests/test_order.cpp.obj
+
+tests/test_order.i: tests/test_order.cpp.i
+.PHONY : tests/test_order.i
+
+# target to preprocess a source file
+tests/test_order.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_order.dir\build.make CMakeFiles/test_order.dir/tests/test_order.cpp.i
+.PHONY : tests/test_order.cpp.i
+
+tests/test_order.s: tests/test_order.cpp.s
+.PHONY : tests/test_order.s
+
+# target to generate assembly for a file
+tests/test_order.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_order.dir\build.make CMakeFiles/test_order.dir/tests/test_order.cpp.s
+.PHONY : tests/test_order.cpp.s
+
+tests/test_order_book.obj: tests/test_order_book.cpp.obj
+.PHONY : tests/test_order_book.obj
+
+# target to build an object file
+tests/test_order_book.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_order_book.dir\build.make CMakeFiles/test_order_book.dir/tests/test_order_book.cpp.obj
+.PHONY : tests/test_order_book.cpp.obj
+
+tests/test_order_book.i: tests/test_order_book.cpp.i
+.PHONY : tests/test_order_book.i
+
+# target to preprocess a source file
+tests/test_order_book.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_order_book.dir\build.make CMakeFiles/test_order_book.dir/tests/test_order_book.cpp.i
+.PHONY : tests/test_order_book.cpp.i
+
+tests/test_order_book.s: tests/test_order_book.cpp.s
+.PHONY : tests/test_order_book.s
+
+# target to generate assembly for a file
+tests/test_order_book.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\test_order_book.dir\build.make CMakeFiles/test_order_book.dir/tests/test_order_book.cpp.s
+.PHONY : tests/test_order_book.cpp.s
+
 # Help Target
 help:
 	@echo The following are some of the valid targets for this Makefile:
@@ -162,9 +347,29 @@ help:
 	@echo ... edit_cache
 	@echo ... rebuild_cache
 	@echo ... ChronoTrade
+	@echo ... test_candlestick
+	@echo ... test_candlestick_generator
+	@echo ... test_csv_parser
+	@echo ... test_order
+	@echo ... test_order_book
 	@echo ... main.obj
 	@echo ... main.i
 	@echo ... main.s
+	@echo ... tests/test_candlestick.obj
+	@echo ... tests/test_candlestick.i
+	@echo ... tests/test_candlestick.s
+	@echo ... tests/test_candlestick_generator.obj
+	@echo ... tests/test_candlestick_generator.i
+	@echo ... tests/test_candlestick_generator.s
+	@echo ... tests/test_csv_parser.obj
+	@echo ... tests/test_csv_parser.i
+	@echo ... tests/test_csv_parser.s
+	@echo ... tests/test_order.obj
+	@echo ... tests/test_order.i
+	@echo ... tests/test_order.s
+	@echo ... tests/test_order_book.obj
+	@echo ... tests/test_order_book.i
+	@echo ... tests/test_order_book.s
 .PHONY : help
 
 

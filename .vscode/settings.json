@@ -51,7 +51,10 @@
         "xutility": "cpp",
         "string": "cpp",
         "fstream": "cpp",
-        "sstream": "cpp"
+        "sstream": "cpp",
+        "cassert": "cpp",
+        "iomanip": "cpp",
+        "optional": "cpp"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

@@ -1,8 +1,38 @@
 [
 {
   "directory": "C:/Users/PC/Desktop/Projects/ChronoTrade/build",
-  "command": "C:\\msys64\\mingw64\\bin\\c++.exe -DBUILD_HASH=\\\"\\\" @CMakeFiles/ChronoTrade.dir/includes_CXX.rsp -std=c++20 -Wall -Wextra -Werror -pedantic -fstack-protector-strong -D_FORTIFY_SOURCE=2 -fno-omit-frame-pointer -o CMakeFiles\\ChronoTrade.dir\\main.cpp.obj -c C:\\Users\\PC\\Desktop\\Projects\\ChronoTrade\\main.cpp",
+  "command": "C:\\msys64\\mingw64\\bin\\c++.exe -DBUILD_HASH=\\\"7b00940\\\" @CMakeFiles/ChronoTrade.dir/includes_CXX.rsp -std=c++20 -Wall -Wextra -Werror -pedantic -fstack-protector-strong -D_FORTIFY_SOURCE=2 -fno-omit-frame-pointer -o CMakeFiles\\ChronoTrade.dir\\main.cpp.obj -c C:\\Users\\PC\\Desktop\\Projects\\ChronoTrade\\main.cpp",
   "file": "C:/Users/PC/Desktop/Projects/ChronoTrade/main.cpp",
   "output": "CMakeFiles/ChronoTrade.dir/main.cpp.obj"
+},
+{
+  "directory": "C:/Users/PC/Desktop/Projects/ChronoTrade/build",
+  "command": "C:\\msys64\\mingw64\\bin\\c++.exe -DBUILD_HASH=\\\"7b00940\\\" -DGTEST_LINKED_AS_SHARED_LIBRARY=1 @CMakeFiles/test_order.dir/includes_CXX.rsp -std=c++20 -o CMakeFiles\\test_order.dir\\tests\\test_order.cpp.obj -c C:\\Users\\PC\\Desktop\\Projects\\ChronoTrade\\tests\\test_order.cpp",
+  "file": "C:/Users/PC/Desktop/Projects/ChronoTrade/tests/test_order.cpp",
+  "output": "CMakeFiles/test_order.dir/tests/test_order.cpp.obj"
+},
+{
+  "directory": "C:/Users/PC/Desktop/Projects/ChronoTrade/build",
+  "command": "C:\\msys64\\mingw64\\bin\\c++.exe -DBUILD_HASH=\\\"7b00940\\\" -DGTEST_LINKED_AS_SHARED_LIBRARY=1 @CMakeFiles/test_csv_parser.dir/includes_CXX.rsp -std=c++20 -o CMakeFiles\\test_csv_parser.dir\\tests\\test_csv_parser.cpp.obj -c C:\\Users\\PC\\Desktop\\Projects\\ChronoTrade\\tests\\test_csv_parser.cpp",
+  "file": "C:/Users/PC/Desktop/Projects/ChronoTrade/tests/test_csv_parser.cpp",
+  "output": "CMakeFiles/test_csv_parser.dir/tests/test_csv_parser.cpp.obj"
+},
+{
+  "directory": "C:/Users/PC/Desktop/Projects/ChronoTrade/build",
+  "command": "C:\\msys64\\mingw64\\bin\\c++.exe -DBUILD_HASH=\\\"7b00940\\\" -DGTEST_LINKED_AS_SHARED_LIBRARY=1 @CMakeFiles/test_candlestick.dir/includes_CXX.rsp -std=c++20 -o CMakeFiles\\test_candlestick.dir\\tests\\test_candlestick.cpp.obj -c C:\\Users\\PC\\Desktop\\Projects\\ChronoTrade\\tests\\test_candlestick.cpp",
+  "file": "C:/Users/PC/Desktop/Projects/ChronoTrade/tests/test_candlestick.cpp",
+  "output": "CMakeFiles/test_candlestick.dir/tests/test_candlestick.cpp.obj"
+},
+{
+  "directory": "C:/Users/PC/Desktop/Projects/ChronoTrade/build",
+  "command": "C:\\msys64\\mingw64\\bin\\c++.exe -DBUILD_HASH=\\\"7b00940\\\" -DGTEST_LINKED_AS_SHARED_LIBRARY=1 @CMakeFiles/test_order_book.dir/includes_CXX.rsp -std=c++20 -o CMakeFiles\\test_order_book.dir\\tests\\test_order_book.cpp.obj -c C:\\Users\\PC\\Desktop\\Projects\\ChronoTrade\\tests\\test_order_book.cpp",
+  "file": "C:/Users/PC/Desktop/Projects/ChronoTrade/tests/test_order_book.cpp",
+  "output": "CMakeFiles/test_order_book.dir/tests/test_order_book.cpp.obj"
+},
+{
+  "directory": "C:/Users/PC/Desktop/Projects/ChronoTrade/build",
+  "command": "C:\\msys64\\mingw64\\bin\\c++.exe -DBUILD_HASH=\\\"7b00940\\\" -DGTEST_LINKED_AS_SHARED_LIBRARY=1 @CMakeFiles/test_candlestick_generator.dir/includes_CXX.rsp -std=c++20 -o CMakeFiles\\test_candlestick_generator.dir\\tests\\test_candlestick_generator.cpp.obj -c C:\\Users\\PC\\Desktop\\Projects\\ChronoTrade\\tests\\test_candlestick_generator.cpp",
+  "file": "C:/Users/PC/Desktop/Projects/ChronoTrade/tests/test_candlestick_generator.cpp",
+  "output": "CMakeFiles/test_candlestick_generator.dir/tests/test_candlestick_generator.cpp.obj"
 }
 ]
