@@ -1,0 +1,8 @@
+[
+{
+  "directory": "C:/Users/PC/Desktop/Projects/ChronoTrade/build",
+  "command": "C:\\msys64\\mingw64\\bin\\c++.exe -DBUILD_HASH=\\\"\\\" @CMakeFiles/ChronoTrade.dir/includes_CXX.rsp -std=c++20 -Wall -Wextra -Werror -pedantic -fstack-protector-strong -D_FORTIFY_SOURCE=2 -fno-omit-frame-pointer -o CMakeFiles\\ChronoTrade.dir\\main.cpp.obj -c C:\\Users\\PC\\Desktop\\Projects\\ChronoTrade\\main.cpp",
+  "file": "C:/Users/PC/Desktop/Projects/ChronoTrade/main.cpp",
+  "output": "CMakeFiles/ChronoTrade.dir/main.cpp.obj"
+}
+]
