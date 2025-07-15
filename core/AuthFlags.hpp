@@ -3,14 +3,10 @@
 #include <stdexcept>
 #include "../utils/logger.h"
 
-// Optional logging toggle
-#define ENABLE_AUTHFLAG_LOG 0
-
-#if ENABLE_AUTHFLAG_LOG
+#define WARN 2
 #define AUTH_LOG(level) LOG(level)
-#else
-#define AUTH_LOG(level) if (false) LOG(level)
-#endif
+
+namespace engine {
 
 enum class AuthFlags {
     TRUSTED,
@@ -35,6 +31,8 @@ inline AuthFlags from_string(const std::string& str) {
     if (str == "MALFORMED") return AuthFlags::MALFORMED;
     if (str == "SUSPICIOUS") return AuthFlags::SUSPICIOUS;
 
-    AUTH_LOG(WARN) << "[Invalid AuthFlags] Input: " << str;
+    AUTH_LOG(WARN) << "[Invalid AuthFlags] Input: " << str << "\n";
     throw std::invalid_argument("Invalid AuthFlags string: " + str);
 }
+
+} // namespace engine

@@ -1,6 +1,9 @@
 #include <gtest/gtest.h>
 #include "../core/OrderBook.hpp"
 
+using engine::OrderBook;
+using engine::Order;
+
 TEST(OrderBookTest, InsertAndSize) {
     OrderBook book;
     EXPECT_EQ(book.size(), 0);
@@ -75,3 +78,14 @@ TEST(OrderBookTest, ParallelInsertionStress) {
 
     EXPECT_EQ(book.size(), 1000);
 }
+
+TEST(OrderBookTest, WorstCaseSortTime) {
+    OrderBook book;
+    for (int i = 10000; i >= 1; --i)
+        book.insert(Order(static_cast<double>(i), 1.0, 1725000000 + i));
+
+    EXPECT_NO_THROW(book.sort_by_price_desc());
+    auto snapshot = book.snapshot();
+    ASSERT_EQ(snapshot.front().price, 10000.0);
+}
+

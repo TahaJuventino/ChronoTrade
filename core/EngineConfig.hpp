@@ -1,15 +1,14 @@
 #pragma once
 #include "../utils/logger.h"
 
-// Optional logging toggle (if you later want to log config changes or access)
-#define ENABLE_LOGS 0
+#define INFO 1
+#define WARN 2
+#define ERROR 3
 
-#if ENABLE_LOGS
-#define SAFE_LOG(level) LOG(level)
-#else
-#define SAFE_LOG(level) if (false) LOG(level)
-#endif
+namespace engine {
 
-struct EngineConfig {
-    static inline bool allow_duplicate_timestamps = false; // Phase 1 default: strict
-};
+    struct EngineConfig {
+        static inline bool allow_duplicate_timestamps = false; // Phase 1 default: strict
+    };
+
+}

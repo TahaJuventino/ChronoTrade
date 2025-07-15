@@ -1,6 +1,11 @@
 #include <gtest/gtest.h>
 #include "../core/Candlestick.hpp"
+#include "../core/Order.hpp"
 #include "../utils/Hasher.hpp"
+
+using engine::Candlestick;
+using engine::Order;
+using engine::hash_orders;
 
 TEST(CandlestickTest, ValidCandle) {
     Candlestick c(100.0, 110.0, 95.0, 105.0, 500.0, 1725000000, 1725000600);

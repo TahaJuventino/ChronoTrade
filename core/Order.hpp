@@ -6,14 +6,11 @@
 #include <cstdint>
 #include "../utils/logger.h"
 
-// Local toggle for Order logging
-#define ENABLE_ORDER_LOGS 0
+#define INFO 1
+#define WARN 2
+#define ERROR 3
 
-#if ENABLE_ORDER_LOGS
-#define SAFE_LOG(level) LOG(level)
-#else
-#define SAFE_LOG(level) if (false) LOG(level)
-#endif
+namespace engine {  
 
 class Order {
 public:
@@ -53,3 +50,5 @@ public:
         return os;
     }
 };
+
+} // namespace engine

@@ -1,6 +1,10 @@
 #include <gtest/gtest.h>
 #include "../feed/CSVOrderParser.hpp"
 
+using feed::CSVOrderParser;
+using engine::Order;
+using engine::AuthFlags;
+
 TEST(CSVOrderParserTest, ValidCSVLine) {
     CSVOrderParser parser;
     auto [order, flag] = parser.parse("100.5,2.0,1725000000");

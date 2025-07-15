@@ -1,21 +1,16 @@
 #pragma once
 #include "OrderParser.hpp"
+#include "../core/EngineConfig.hpp"
 #include "../utils/logger.h"
+
 #include <sstream>
 #include <vector>
 
-// Toggle logs locally
-#define ENABLE_LOGS 0
-
-#if ENABLE_LOGS
-#define SAFE_LOG(level) LOG(level)
-#else
-#define SAFE_LOG(level) if (false) LOG(level)
-#endif
+namespace feed {
 
 class CSVOrderParser : public OrderParser {
 public:
-    std::pair<Order, AuthFlags> parse(const std::string& line) override {
+    std::pair<engine::Order, engine::AuthFlags> parse(const std::string& line) override {
         std::stringstream ss(line);
         std::string token;
         std::vector<std::string> tokens;
@@ -26,7 +21,7 @@ public:
 
         if (tokens.size() != 3) {
             SAFE_LOG(WARN) << "[Malformed CSV] Incorrect number of fields: " << line;
-            return { Order(1.0, 1.0, 1'725'000'000), AuthFlags::MALFORMED };
+            return { engine::Order(1.0, 1.0, 1'725'000'000), engine::AuthFlags::MALFORMED };
         }
 
         try {
@@ -34,28 +29,24 @@ public:
             double amount = std::stod(tokens[1]);
             std::int64_t timestamp = std::stoll(tokens[2]);
 
-            if (price < Order::MIN_PRICE || price > Order::MAX_PRICE) {
+            if (price < engine::Order::MIN_PRICE || price > engine::Order::MAX_PRICE) {
                 SAFE_LOG(WARN) << "[Suspicious Price] " << price;
-                return { Order(1.0, 1.0, 1'725'000'000), AuthFlags::SUSPICIOUS };
+                return { engine::Order(1.0, 1.0, 1'725'000'000), engine::AuthFlags::SUSPICIOUS };
             }
-            if (amount < Order::MIN_AMOUNT || amount > Order::MAX_AMOUNT) {
+            if (amount < engine::Order::MIN_AMOUNT || amount > engine::Order::MAX_AMOUNT) {
                 SAFE_LOG(WARN) << "[Suspicious Amount] " << amount;
-                return { Order(1.0, 1.0, 1'725'000'000), AuthFlags::SUSPICIOUS };
+                return { engine::Order(1.0, 1.0, 1'725'000'000), engine::AuthFlags::SUSPICIOUS };
             }
-            if (timestamp < Order::MIN_TIMESTAMP || timestamp > Order::MAX_TIMESTAMP) {
+            if (timestamp < engine::Order::MIN_TIMESTAMP || timestamp > engine::Order::MAX_TIMESTAMP) {
                 SAFE_LOG(WARN) << "[Suspicious Timestamp] " << timestamp;
-                return { Order(1.0, 1.0, 1'725'000'000), AuthFlags::SUSPICIOUS };
+                return { engine::Order(1.0, 1.0, 1'725'000'000), engine::AuthFlags::SUSPICIOUS };
             }
 
-            SAFE_LOG(INFO) << "[Parsed Order] Price=" << price
-                           << " Amount=" << amount
-                           << " Timestamp=" << timestamp;
-
-            return { Order(price, amount, timestamp), AuthFlags::TRUSTED };
+            return { engine::Order(price, amount, timestamp), engine::AuthFlags::TRUSTED };
 
         } catch (...) {
             SAFE_LOG(ERROR) << "[Malformed CSV] Failed to parse fields: " << line;
-            return { Order(1.0, 1.0, 1'725'000'000), AuthFlags::MALFORMED };
+            return { engine::Order(1.0, 1.0, 1'725'000'000), engine::AuthFlags::MALFORMED };
         }
     }
 
@@ -63,3 +54,5 @@ public:
         return "CSV";
     }
 };
+
+}  // namespace feed

@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 #include "../core/Order.hpp"
 
+using engine::Order;
+
 TEST(OrderTest, ValidOrder) {
     Order o(120.5, 10.0, 1'725'000'000);
     EXPECT_DOUBLE_EQ(o.price, 120.5);

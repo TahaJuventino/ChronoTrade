@@ -42,7 +42,10 @@ target_include_directories(ChronoTrade PRIVATE
   ${PROJECT_SOURCE_DIR}/core
   ${PROJECT_SOURCE_DIR}/utils
   ${PROJECT_SOURCE_DIR}/security
+  ${PROJECT_SOURCE_DIR}/threads
 )
+
+add_compile_definitions(ENABLE_LOGS=0) # Disable logs by default
 
 # ========== GTEST-BASED TESTS ==========
 
@@ -74,3 +77,58 @@ add_executable(test_candlestick_generator tests/test_candlestick_generator.cpp)
 target_link_libraries(test_candlestick_generator PRIVATE GTest::gtest GTest::gtest_main)
 target_include_directories(test_candlestick_generator PRIVATE ${PROJECT_SOURCE_DIR}/core ${PROJECT_SOURCE_DIR}/engine)
 
+## ---- SMA Indicator Tests ----
+add_executable(test_sma_indicator tests/test_sma_indicator.cpp)
+target_link_libraries(test_sma_indicator PRIVATE GTest::gtest_main)
+target_include_directories(test_sma_indicator PRIVATE ${PROJECT_SOURCE_DIR}/core ${PROJECT_SOURCE_DIR}/engine ${PROJECT_SOURCE_DIR}/utils)
+
+# ---- Fixed Window Tests ----
+add_executable(test_fixed_window tests/test_fixed_window.cpp)
+target_link_libraries(test_fixed_window PRIVATE GTest::gtest_main)
+target_include_directories(test_fixed_window PRIVATE ${PROJECT_SOURCE_DIR}/core ${PROJECT_SOURCE_DIR}/engine)
+
+# ---- RSI Indicator Tests ----
+add_executable(test_rsi_indicator tests/test_rsi_indicator.cpp)
+target_link_libraries(test_rsi_indicator PRIVATE GTest::gtest_main)
+target_include_directories(test_rsi_indicator PRIVATE ${PROJECT_SOURCE_DIR}/core ${PROJECT_SOURCE_DIR}/engine ${PROJECT_SOURCE_DIR}/utils)
+
+# ---- MACD Indicator Tests ----
+add_executable(test_macd_indicator tests/test_macd_indicator.cpp)
+target_link_libraries(test_macd_indicator PRIVATE GTest::gtest_main)
+target_include_directories(test_macd_indicator PRIVATE ${PROJECT_SOURCE_DIR}/core ${PROJECT_SOURCE_DIR}/engine)
+
+# ---- Bollinger Bands Tests ----
+add_executable(test_bollinger_indicator tests/test_bollinger_indicator.cpp)
+target_link_libraries(test_bollinger_indicator PRIVATE GTest::gtest_main)
+target_include_directories(test_bollinger_indicator PRIVATE ${PROJECT_SOURCE_DIR}/core ${PROJECT_SOURCE_DIR}/engine ${PROJECT_SOURCE_DIR}/utils)
+
+# ---- Indicator Registry Tests ----
+add_executable(test_indicator_registry tests/test_indicator_registry.cpp)
+target_link_libraries(test_indicator_registry PRIVATE GTest::gtest_main)
+target_include_directories(test_indicator_registry PRIVATE engine core)
+
+# ---- Loop Processor Tests ----
+add_executable(test_loop_processor tests/test_loop_processor.cpp)
+target_link_libraries(test_loop_processor PRIVATE GTest::gtest_main)
+target_include_directories(test_loop_processor PRIVATE ${PROJECT_SOURCE_DIR}/core ${PROJECT_SOURCE_DIR}/engine)
+
+# ---- Arena Allocator Tests ----
+add_executable(test_arena_allocator tests/test_arena_allocator.cpp)
+target_link_libraries(test_arena_allocator PRIVATE GTest::gtest_main)
+target_include_directories(test_arena_allocator PRIVATE ${PROJECT_SOURCE_DIR}/utils)
+
+# ---- SIMD Sort Tests ----
+add_executable(test_simd_sort tests/test_simd_sort.cpp)
+target_link_libraries(test_simd_sort PRIVATE GTest::gtest_main)
+target_include_directories(test_simd_sort PRIVATE ${PROJECT_SOURCE_DIR}/core ${PROJECT_SOURCE_DIR}/utils)
+
+# ---- OrderBook Arena Tests ----
+add_executable(test_orderbook_arena tests/test_orderbook_arena.cpp)
+target_link_libraries(test_orderbook_arena PRIVATE GTest::gtest_main)
+target_include_directories(test_orderbook_arena PRIVATE ${PROJECT_SOURCE_DIR}/core ${PROJECT_SOURCE_DIR}/utils)
+target_compile_options(test_orderbook_arena PRIVATE -fexceptions)
+
+# ---- IIndicator Mock Tests ----
+add_executable(test_iindicator_mock tests/test_iindicator_mock.cpp)
+target_link_libraries(test_iindicator_mock PRIVATE GTest::gtest_main)
+target_include_directories(test_iindicator_mock PRIVATE ${PROJECT_SOURCE_DIR}/core ${PROJECT_SOURCE_DIR}/engine)
