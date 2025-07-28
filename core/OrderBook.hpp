@@ -36,7 +36,13 @@ namespace engine {
         }
 
         void insert(const Order& o) {
-            std::lock_guard<std::mutex> lock(mtx);  
+            std::lock_guard<std::mutex> lock(mtx);
+
+            if (seen_timestamps.find(o.timestamp) != seen_timestamps.end()) {
+                SAFE_LOG(WARN) << "[Duplicate Order] ts=" << o.timestamp;
+                return;
+            }
+            seen_timestamps.insert(o.timestamp);
 
             if (arena) {
                 if (arena_count >= max_orders) {
