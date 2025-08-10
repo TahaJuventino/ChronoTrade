@@ -2,7 +2,7 @@
 
 void verify_build_flags() {
 #if !defined(__OPTIMIZE__)
-    LOG(WARN);
+    LOG(LOG_WARN);
     std::cerr << "[WARN] Built without optimizations (-O2)\n";
 #endif
 #if !defined(__GNUC__)
@@ -17,7 +17,8 @@ void verify_build_flags() {
 int main() {
     verify_build_flags();  // Audit build environment
 
-    LOG(INFO);
+    LOG(LOG_INFO);
+
     std::cerr << "ChronoTrade system initialized.\n";
 
     std::cerr << "Build hash: " << BUILD_HASH << std::endl;

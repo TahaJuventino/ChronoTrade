@@ -1,54 +1,66 @@
 #pragma once
+
 #include <iostream>
 #include <string>
 #include <stdexcept>
 #include <iomanip>
 #include <cstdint>
+#include <cmath>
+#include <sstream>
+
 #include "../utils/logger.h"
 
 #define INFO 1
 #define WARN 2
-#define ERROR 3
 
-namespace engine {  
+namespace engine {
 
-class Order {
-public:
-    static constexpr double MIN_PRICE = 0.0001;
-    static constexpr double MAX_PRICE = 1e6;
-    static constexpr double MIN_AMOUNT = 0.0001;
-    static constexpr double MAX_AMOUNT = 1e5;
-    static constexpr std::int64_t MIN_TIMESTAMP = 1'000'000'000; // ~2001
-    static constexpr std::int64_t MAX_TIMESTAMP = 2'000'000'000; // ~2033
+    class Order {
+        public:
+            static constexpr double MIN_PRICE = 0.0001;
+            static constexpr double MAX_PRICE = 1e6;
+            static constexpr double MIN_AMOUNT = 0.0001;
+            static constexpr double MAX_AMOUNT = 1e5;
+            static constexpr std::int64_t MIN_TIMESTAMP = 1'000'000'000;
+            static constexpr std::int64_t MAX_TIMESTAMP = 2'000'000'000;
 
-    double price;
-    double amount;
-    std::int64_t timestamp;
+            double price;
+            double amount;
+            std::int64_t timestamp;
 
-    Order(double p, double a, std::int64_t ts) {
-        if (p < MIN_PRICE || p > MAX_PRICE)
-            throw std::invalid_argument("Order::price out of bounds");
-        if (a < MIN_AMOUNT || a > MAX_AMOUNT)
-            throw std::invalid_argument("Order::amount out of bounds");
-        if (ts < MIN_TIMESTAMP || ts > MAX_TIMESTAMP)
-            throw std::invalid_argument("Order::timestamp out of bounds");
+            Order(double p, double a, std::int64_t ts) {
+                if (!std::isfinite(p)) throw std::invalid_argument("Order::price not finite");
+                if (!std::isfinite(a)) throw std::invalid_argument("Order::amount not finite");
+                if (p < MIN_PRICE || p > MAX_PRICE)
+                    throw std::invalid_argument("Order::price out of bounds");
+                if (a < MIN_AMOUNT || a > MAX_AMOUNT)
+                    throw std::invalid_argument("Order::amount out of bounds");
+                if (ts < MIN_TIMESTAMP || ts > MAX_TIMESTAMP)
+                    throw std::invalid_argument("Order::timestamp out of bounds");
 
-        price = p;
-        amount = a;
-        timestamp = ts;
+                price = p;
+                amount = a;
+                timestamp = ts;
 
-        SAFE_LOG(INFO) << "[Order Created] Price=" << price
-                       << " Amount=" << amount
-                       << " Timestamp=" << timestamp;
-    }
+                SAFE_LOG(INFO) << "[Order Created] Price=" << price
+                            << " Amount=" << amount
+                            << " Timestamp=" << timestamp;
+            }
 
-    friend std::ostream& operator<<(std::ostream& os, const Order& o) {
-        os << std::fixed << std::setprecision(2)
-           << "[Order] Price: " << o.price
-           << ", Amount: " << o.amount
-           << ", Timestamp: " << o.timestamp;
-        return os;
-    }
-};
+            std::string to_string() const {
+                std::ostringstream oss;
+                oss << std::fixed << std::setprecision(6)
+                    << price << "," << amount << "," << timestamp;
+                return oss.str();
+            }
+
+            friend std::ostream& operator<<(std::ostream& os, const Order& o) {
+                os << std::fixed << std::setprecision(2)
+                   << "[Order] Price: " << o.price
+                   << ", Amount: " << o.amount
+                   << ", Timestamp: " << o.timestamp;
+                return os;
+            }
+    };
 
 } // namespace engine

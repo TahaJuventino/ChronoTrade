@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
 #include "../core/OrderBook.hpp"
+#include "../utils/ArenaAllocator.hpp"
+
+#include <thread>
 
 using engine::OrderBook;
 using engine::Order;
@@ -88,4 +91,3 @@ TEST(OrderBookTest, WorstCaseSortTime) {
     auto snapshot = book.snapshot();
     ASSERT_EQ(snapshot.front().price, 10000.0);
 }
-

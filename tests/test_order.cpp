@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include "../core/Order.hpp"
-
+#include <cmath>
+#include <limits>
 using engine::Order;
 
 TEST(OrderTest, ValidOrder) {
@@ -36,3 +37,26 @@ TEST(OrderTest, UpperBoundsPass) {
 TEST(OrderTest, LowerBoundsPass) {
     EXPECT_NO_THROW(Order(0.0001, 0.0001, 1'000'000'000));
 }
+
+TEST(OrderTest, PriceBoundsValidation) {
+    EXPECT_NO_THROW(Order(Order::MIN_PRICE, 1.0, 1'500'000'000));
+    EXPECT_NO_THROW(Order(Order::MAX_PRICE, 1.0, 1'500'000'000));
+    EXPECT_THROW(Order(0.0, 1.0, 1'500'000'000), std::invalid_argument);
+    EXPECT_THROW(Order(Order::MAX_PRICE + 1.0, 1.0, 1'500'000'000), std::invalid_argument);
+}
+
+TEST(OrderTest, RejectsNaNOrInfinity) {
+    double nan = std::numeric_limits<double>::quiet_NaN();
+    double inf = std::numeric_limits<double>::infinity();
+    EXPECT_THROW(Order(nan, 1.0, 1'500'000'000), std::invalid_argument);
+    EXPECT_THROW(Order(1.0, nan, 1'500'000'000), std::invalid_argument);
+    EXPECT_THROW(Order(inf, 1.0, 1'500'000'000), std::invalid_argument);
+    EXPECT_THROW(Order(1.0, inf, 1'500'000'000), std::invalid_argument);
+}
+
+/* TODO: Add more tests for edge cases, such as:
+
+OrderTest.SignatureAcceptsValidHMAC()
+OrderTest.RejectsTamperedFields()
+
+*/

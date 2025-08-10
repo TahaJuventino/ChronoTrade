@@ -1,14 +1,15 @@
 #pragma once
+
 #include <iostream>
 #include <fstream>
 #include <ctime>
 #include <string>
 #include <sstream>
 
-// ===== Log Levels =====
-#define INFO 1
-#define WARN 2
-#define ERROR 3
+// ===== Log Levels (Safe Names) =====
+#define LOG_INFO 1
+#define LOG_WARN 2
+#define LOG_ERROR 3
 
 // ===== Log Buffer =====
 namespace log_internal {
@@ -18,7 +19,8 @@ namespace log_internal {
 
 // ===== Base Logging Macro =====
 #define LOG(level) \
-    std::cerr << "[" << #level << "] " << __FILE__ << ":" << __LINE__ << " "
+    std::cerr << "[" << (level == LOG_INFO ? "INFO" : (level == LOG_WARN ? "WARN" : "ERROR")) \
+              << "] " << __FILE__ << ":" << __LINE__ << " "
 
 // ===== Panic Macro =====
 #define PANIC(msg) \

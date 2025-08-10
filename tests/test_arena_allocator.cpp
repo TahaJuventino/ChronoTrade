@@ -60,3 +60,9 @@ TEST(ArenaAllocatorTest, OveralignedStructAllocation) {
         ptrs.push_back(p);
     }
 }
+
+/* TODO: Add more tests for edge cases, such as:
+        AllocateReturnsNullWhenExhausted
+        AllocatorCanReuseFreedBlocks
+        ResetResetsFreeListAndOffset
+*/

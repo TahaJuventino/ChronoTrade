@@ -2,6 +2,7 @@
 #include "../core/Candlestick.hpp"
 #include "../core/Order.hpp"
 #include "../utils/Hasher.hpp"
+#include <limits>
 
 using engine::Candlestick;
 using engine::Order;
@@ -61,4 +62,32 @@ TEST(CandlestickTest, StableHashFingerprint) {
     std::string h1 = hash_orders(input);
     std::string h2 = hash_orders(input);
     EXPECT_EQ(h1, h2);
+}
+
+TEST(CandlestickTest, RejectsTimestampWraparound) {
+    double price = 100.0, volume = 1.0;
+    int64_t start = std::numeric_limits<int64_t>::max() - 5;
+    int64_t end = std::numeric_limits<int64_t>::max(); // valid range
+    EXPECT_NO_THROW(Candlestick(price, price, price, price, volume, start, end));
+
+    // INVALID: start > end
+    EXPECT_THROW(Candlestick(price, price, price, price, volume, end, start), std::invalid_argument);
+
+    // INVALID: wraparound by adding large window
+    EXPECT_THROW(Candlestick(price, price, price, price, volume, end, end + 1), std::invalid_argument);
+}
+
+TEST(CandlestickTest, MicrosecondDeltaValid) {
+    double price = 123.45, volume = 0.001;
+    for (int i = 1; i <= 10; ++i) {
+        int64_t start = 1'725'000'000;
+        int64_t end = start + i;  // microsecond granularity
+        EXPECT_NO_THROW(Candlestick(price, price, price, price, volume, start, end));
+    }
+}
+
+TEST(CandlestickTest, RejectsZeroTimeWindow) {
+    double price = 50.0, volume = 1.0;
+    int64_t t = 1'725'000'000;
+    EXPECT_THROW(Candlestick(price, price, price, price, volume, t, t), std::invalid_argument);
 }

@@ -5,6 +5,7 @@ A multi-threaded RSI candlestick engine built with OS-level principles, security
 ---
 
 ## 🛠 Build Requirements
+
 - MSYS2 with MinGW64
 - GCC, CMake, Make
 - Python (for future ML module)

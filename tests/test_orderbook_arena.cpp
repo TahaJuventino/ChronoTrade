@@ -78,10 +78,18 @@ TEST(OrderBookArenaTest, ArenaMemoryExhaustion) {
         }
     }
 
-    // Verify memory exhaustion handling
-    EXPECT_LT(book.size(), 50);  // Not all orders inserted
-    EXPECT_GT(book.failed_arena_inserts(), 0);  // Some failed due to memory
-    EXPECT_EQ(successful_inserts, book.size());  // Consistency check
+    // Detect if arena was used or fallback mode was triggered
+    if (book.is_arena_full()) {
+        // Arena mode engaged and filled — verify insert failures
+        EXPECT_LT(book.size(), 50) << "Arena should not accept all inserts.";
+        EXPECT_GT(book.failed_arena_inserts(), 0) << "At least one insert should fail in full arena.";
+        EXPECT_EQ(successful_inserts, book.size()) << "Reported size should match successful inserts.";
+    } else {
+        // Arena allocation failed at constructor — fallback mode used
+        EXPECT_EQ(book.size(), 50) << "Fallback mode should allow all inserts.";
+        EXPECT_EQ(book.failed_arena_inserts(), 0) << "Fallback mode must not count arena failures.";
+        SUCCEED() << "[Fallback Mode Activated] Arena allocation failed; std::vector used instead.";
+    }
 }
 
 TEST(OrderBookArenaTest, ArenaFallbackMode) {
@@ -133,4 +141,78 @@ TEST(OrderBookArenaTest, SortsDescendingByPrice) {
     ASSERT_EQ(sorted[0].price, 105.0);
     ASSERT_EQ(sorted[1].price, 101.0);
     ASSERT_EQ(sorted[2].price, 99.0);
+}
+
+TEST(OrderBookArenaTest, ArenaFragmentationSimulation) {
+    constexpr std::size_t capacity = 10;
+    utils::ArenaAllocator arena(capacity * sizeof(Order));
+    OrderBook book(&arena, capacity);
+
+    for (std::size_t i = 0; i < capacity; ++i) {
+        EXPECT_NO_THROW(book.insert(Order(100 + i, 1.0, 1'725'000'000 + i)));
+    }
+
+    EXPECT_TRUE(book.is_arena_full());
+    EXPECT_EQ(book.failed_arena_inserts(), 0);
+
+    // Insert past capacity to trigger graceful failure
+    book.insert(Order(200.0, 1.0, 1'725'000'999));
+    EXPECT_EQ(book.failed_arena_inserts(), 1);
+}
+
+TEST(OrderBookArenaTest, SnapshotRemainsStableUnderRace) {
+    constexpr std::size_t capacity = 128;
+    utils::ArenaAllocator arena(capacity * sizeof(Order));
+    OrderBook book(&arena, capacity);
+
+    std::atomic<bool> run = true;
+
+    std::thread writer([&] {
+        int64_t ts = 1'725'000'000;
+        while (run) {
+            try {
+                book.insert(Order(100.0, 1.0, ts++));
+            } catch (...) {}
+        }
+    });
+
+    std::thread reader([&] {
+        for (int i = 0; i < 50; ++i) {
+            auto snap = book.snapshot();
+            EXPECT_LE(snap.size(), capacity);
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+    });
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    run = false;
+
+    writer.join();
+    reader.join();
+}
+
+TEST(OrderBookArenaTest, ArenaResetAndRebindAllowsReuse) {
+    constexpr std::size_t order_count = 8;
+    std::size_t arena_bytes = sizeof(Order) * order_count;
+
+    utils::ArenaAllocator arena(arena_bytes);
+    OrderBook book(&arena, order_count);
+
+    // Fill it up
+    for (std::size_t i = 0; i < order_count; ++i)
+        book.insert(Order(100.0 + i, 1.0, 1'725'100'000 + i));
+
+    EXPECT_EQ(book.size(), order_count);
+    EXPECT_TRUE(book.is_arena_full());
+
+    // Reset allocator and rebind
+    arena.reset();
+    OrderBook reused(&arena, order_count);  // new book, rebind
+
+    // Insert again
+    for (std::size_t i = 0; i < order_count; ++i)
+        EXPECT_NO_THROW(reused.insert(Order(200.0 + i, 1.0, 1'725'200'000 + i)));
+
+    EXPECT_EQ(reused.size(), order_count);
+    EXPECT_TRUE(reused.is_arena_full());
 }

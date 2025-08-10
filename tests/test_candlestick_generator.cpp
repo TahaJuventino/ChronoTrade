@@ -94,3 +94,104 @@ TEST(CandlestickGeneratorTest, DispatchesToRegistryAsync) {
 
     EXPECT_NEAR(sma->value(), 102.0, 0.001);
 }
+
+TEST(CandlestickGeneratorTest, FlushConsistentUnderRace) {
+    CandlestickGenerator gen(60);
+
+    std::atomic<bool> ready = false;
+    std::vector<std::thread> threads;
+
+    // Inserters
+    for (int i = 0; i < 4; ++i) {
+        threads.emplace_back([&gen, &ready, i]() {
+            while (!ready) std::this_thread::yield();
+            for (int j = 0; j < 25; ++j) {
+                gen.insert(Order(100.0 + i + j * 0.1, 1.0, 1'725'000'000 + j));
+            }
+        });
+    }
+
+    // Flusher thread
+    std::optional<Candlestick> flushed;
+    threads.emplace_back([&gen, &ready, &flushed]() {
+        while (!ready) std::this_thread::yield();
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        flushed = gen.flush_if_ready(1'725'000'060);
+    });
+
+    // Go
+    ready = true;
+    for (auto& t : threads) t.join();
+
+    ASSERT_TRUE(flushed.has_value());
+    EXPECT_GE(flushed->volume, 50.0);
+    EXPECT_LE(flushed->volume, 100.0);
+    EXPECT_GE(flushed->high, flushed->low);  // sanity
+}
+
+TEST(CandlestickGeneratorTest, DispatchesToCallbackAfterFlush) {
+    engine::CandlestickGenerator gen(60);
+
+    std::optional<engine::Candlestick> received;
+    std::mutex mtx;
+    std::condition_variable cv;
+    bool signaled = false;
+
+    // Inject callback
+    gen.set_dispatch_callback([&](const engine::Candlestick& c) {
+        std::lock_guard<std::mutex> lock(mtx);
+        received = c;
+        signaled = true;
+        cv.notify_one();
+    });
+
+    // Insert orders
+    gen.insert(engine::Order(100.0, 1.0, 1'725'000'000));
+    gen.insert(engine::Order(101.0, 2.0, 1'725'000'030));
+
+    // Trigger flush
+    auto flush = gen.flush_if_ready(1'725'000'061);
+    ASSERT_TRUE(flush.has_value());
+
+    // Wait for callback signal
+    std::unique_lock<std::mutex> lock(mtx);
+    cv.wait_for(lock, std::chrono::milliseconds(100), [&]() { return signaled; });
+
+    ASSERT_TRUE(received.has_value());
+    EXPECT_DOUBLE_EQ(received->open, 100.0);
+    EXPECT_DOUBLE_EQ(received->close, 101.0);
+    EXPECT_DOUBLE_EQ(received->volume, 3.0);
+    EXPECT_EQ(received->start_time, 1'725'000'000);
+}
+
+TEST(CandlestickGeneratorTest, FlushUnderConcurrentInsertsIsStable) {
+    engine::CandlestickGenerator gen(60);
+    std::atomic<bool> start_flag = false;
+    std::optional<engine::Candlestick> result;
+
+    std::vector<std::thread> inserters;
+    for (int i = 0; i < 4; ++i) {
+        inserters.emplace_back([&gen, &start_flag, i]() {
+            while (!start_flag) std::this_thread::yield();
+            for (int j = 0; j < 25; ++j) {
+                gen.insert(engine::Order(100.0 + i + j * 0.1, 1.0, 1'725'000'000 + j));
+            }
+        });
+    }
+
+    std::thread flusher([&gen, &start_flag, &result]() {
+        while (!start_flag) std::this_thread::yield();
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        result = gen.flush_if_ready(1'725'000'060);
+    });
+
+    start_flag = true;
+
+    for (auto& t : inserters) t.join();
+    flusher.join();
+
+    ASSERT_TRUE(result.has_value());
+    EXPECT_GE(result->volume, 50.0);
+    EXPECT_LE(result->volume, 100.0);
+    EXPECT_GE(result->high, result->low);
+}

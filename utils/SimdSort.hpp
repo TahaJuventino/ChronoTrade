@@ -2,6 +2,7 @@
 
 #include "../core/Order.hpp"
 #include "../utils/logger.h"
+
 #include <vector>
 #include <algorithm>
 #include <immintrin.h>

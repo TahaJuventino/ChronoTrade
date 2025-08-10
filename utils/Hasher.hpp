@@ -1,5 +1,7 @@
 #pragma once
+
 #include "../core/Order.hpp"
+
 #include <string>
 #include <sstream>
 #include <vector>
