@@ -53,21 +53,6 @@ Built for **real-time market processing**, **multi-indicator analytics**, and **
 
 ---
 
-## **📡 TCP Latency Proxy – Stage Progress**
-
-**Stage 1 – Socket Core Max-Out** (75%)
-Multi-threaded handling, token bucket throttling, event-driven core, zero-copy ring buffers, pluggable framing.
-**Stage 2 – Chaos Injection Suite** (70%)
-Latency, jitter, drop/dup rates, directional filtering, seeded reproducibility, Chaos DSL.
-**Stage 3 – Observability** (60%)
-Per-connection stats, Prometheus exporter, histograms, hexdump/PCAP.
-**Stage 4 – Multi-Protocol Engine** (25%)
-HTTP error handling, pluggable protocol framework.
-**Stage 5 – Scale & Survivability** (55%)
-Live config reload, watchdog, auto-restart, fuzz harness.
-
----
-
 ## **🛠 Build Requirements**
 
 * MSYS2 with MinGW64
@@ -106,3 +91,4 @@ ctest --output-on-failure
 ---
 
 If you want, I can now **merge this into your existing `README.md` in the repo** so that the build and module info matches your current Phase 3 state. This way, the repo reflects exactly where the project is in the phases.
+
