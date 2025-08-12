@@ -13,6 +13,16 @@
 
 #include <openssl/sha.h>
 
+namespace std {
+template <> struct formatter<std::thread::id> : formatter<std::string> {
+    auto format(const std::thread::id &id, format_context &ctx) const {
+        std::ostringstream oss;
+        oss << id;
+        return formatter<std::string>::format(oss.str(), ctx);
+    }
+};
+} // namespace std
+
 namespace security {
 
 class CryptoHasher {
