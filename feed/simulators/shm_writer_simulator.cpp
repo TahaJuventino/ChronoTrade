@@ -26,6 +26,8 @@ int main(int argc, char* argv[]) {
         else if (arg == "--burst") burst_mode = true;
     }
 
+    size_t ring_size = sizeof(RingBuffer) + (kMaxPackets - 1) * sizeof(Packet);
+
     int fd = shm_open("/test_shm_live_writer", O_CREAT | O_RDWR, 0666);
 
     if (fd < 0) {
@@ -33,7 +35,12 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    void* ptr = mmap(nullptr, sizeof(RingBuffer), PROT_WRITE, MAP_SHARED, fd, 0);
+    if (ftruncate(fd, ring_size) != 0) {
+        std::cerr << "ftruncate failed\n";
+        return 1;
+    }
+
+    void* ptr = mmap(nullptr, ring_size, PROT_WRITE, MAP_SHARED, fd, 0);
     if (ptr == MAP_FAILED) {
         std::cerr << "mmap failed\n";
         return 1;
@@ -77,7 +84,7 @@ int main(int argc, char* argv[]) {
         if (!burst_mode) std::this_thread::sleep_for(std::chrono::milliseconds(rate_ms));
     }
 
-    munmap(ptr, sizeof(RingBuffer));
+    munmap(ptr, ring_size);
     close(fd);
     return 0;
 }
