@@ -10,6 +10,8 @@
 #include <string>
 #include <optional>
 #include <sstream>
+#include <stdexcept>
+#include <cassert>
 
 namespace engine {
 
@@ -50,9 +52,14 @@ namespace engine {
         };
 
         MACDIndicator::MACDIndicator(std::size_t fast, std::size_t slow, std::size_t signal)
-            : fastPeriod(fast), slowPeriod(slow), signalPeriod(signal) {}
+            : fastPeriod(fast), slowPeriod(slow), signalPeriod(signal) {
+            if (fast == 0 || slow == 0 || signal == 0) {
+                throw std::invalid_argument("MACD periods must be > 0");
+            }
+        }
 
         double MACDIndicator::computeEMA(double price, double prev_ema, double period) const {
+            assert(period > 0);
             double multiplier = 2.0 / (period + 1);
             return (price - prev_ema) * multiplier + prev_ema;
         }
