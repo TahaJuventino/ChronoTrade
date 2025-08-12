@@ -6,7 +6,7 @@
 #include "../core/EngineConfig.hpp"
 #include "../threads/ThreadPool.hpp"
 #include "../engine/IndicatorRegistry.hpp"
-#include "../utils/logger.h"
+#include "../security/SecurityAwareLogger.hpp"
 
 #include <vector>
 #include <mutex>
@@ -65,8 +65,10 @@ namespace engine {
 
                         double tmp = volume + o.amount;
                         if (!std::isfinite(tmp)) {
-                            SAFE_LOG(ERROR) << "[Overflow Detected] volume=" << volume
-                                            << " + amount=" << o.amount;
+                            security::SecurityAwareLogger::instance().log(
+                                security::SecurityAwareLogger::Level::Error,
+                                "[Overflow Detected] volume={} + amount={}",
+                                volume, o.amount);
                             throw std::overflow_error("Volume accumulation overflow");
                         }
                         volume = tmp;
@@ -79,11 +81,14 @@ namespace engine {
 
                     dropped_orders += static_cast<int>(window.size());
 
-                    SAFE_LOG(INFO) << "[Flush Trace] SHA256 = " << hash_orders(window);
-                    SAFE_LOG(INFO) << "[Flush] Window Start=" << window_start
-                                << " | Accepted=" << accepted_orders
-                                << " | Late=" << late_orders
-                                << " | Dropped=" << dropped_orders;
+                    security::SecurityAwareLogger::instance().log(
+                        security::SecurityAwareLogger::Level::Info,
+                        "[Flush Trace] SHA256 = {}",
+                        hash_orders(window));
+                    security::SecurityAwareLogger::instance().log(
+                        security::SecurityAwareLogger::Level::Info,
+                        "[Flush] Window Start={} | Accepted={} | Late={} | Dropped={}",
+                        window_start, accepted_orders, late_orders, dropped_orders);
 
                     // Reset state
                     if (dispatch_cb) {
@@ -101,7 +106,9 @@ namespace engine {
                             reg->update_all(c);
                         });
                     } else {
-                        SAFE_LOG(WARN) << "[CandlestickGenerator] No registry or thread pool bound.";
+                        security::SecurityAwareLogger::instance().log(
+                            security::SecurityAwareLogger::Level::Warn,
+                            "[CandlestickGenerator] No registry or thread pool bound.");
                     }
                     return std::make_optional(std::move(candle));
 
@@ -124,10 +131,16 @@ namespace engine {
                 if (order.timestamp < window_start + window_duration) {
                     window.push_back(order);
                     accepted_orders++;
-                    SAFE_LOG(INFO) << "[Order Accepted] " << order;
+                    security::SecurityAwareLogger::instance().log(
+                        security::SecurityAwareLogger::Level::Info,
+                        "[Order Accepted] {}",
+                        order.to_string());
                 } else {
                     late_orders++;
-                    SAFE_LOG(WARN) << "[Late Order Dropped] " << order;
+                    security::SecurityAwareLogger::instance().log(
+                        security::SecurityAwareLogger::Level::Warn,
+                        "[Late Order Dropped] {}",
+                        order.to_string());
                 }
             }
         };

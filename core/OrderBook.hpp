@@ -3,7 +3,7 @@
 #include "Order.hpp"
 #include "EngineConfig.hpp"
 #include "../utils/ArenaAllocator.hpp"
-#include "../utils/logger.h"
+#include "../security/SecurityAwareLogger.hpp"
 #include "../utils/SimdSort.hpp"
 
 #include <vector>
@@ -13,9 +13,6 @@
 #include <chrono>
 #include <memory>
 
-#define INFO 1
-#define WARN 2
-#define ERROR 3
 
 namespace engine {
 
@@ -27,22 +24,35 @@ namespace engine {
                     std::size_t total_bytes = sizeof(Order) * max_orders;
                     try {
                         arena_buffer = static_cast<Order*>(arena->allocate(total_bytes, alignof(Order)));
-                        SAFE_LOG(INFO) << "[OrderBook] ArenaAllocator enabled with " << max_orders << " slots.";
+                        security::SecurityAwareLogger::instance().log(
+                            security::SecurityAwareLogger::Level::Info,
+                            "[OrderBook] ArenaAllocator enabled with {} slots.",
+                            max_orders);
                     } catch (const std::bad_alloc& e) {
                         arena = nullptr;
                         arena_buffer = nullptr;
-                        SAFE_LOG(ERROR) << "[OrderBook Arena Init Failed] Falling back. Reason: " << e.what();
+                        security::SecurityAwareLogger::instance().log(
+                            security::SecurityAwareLogger::Level::Error,
+                            "[OrderBook Arena Init Failed] Falling back. Reason: {}",
+                            e.what());
                     } catch (const std::exception& ex) {
                         arena = nullptr;
                         arena_buffer = nullptr;
-                        SAFE_LOG(ERROR) << "[OrderBook Arena Init Failed] Exception: " << ex.what();
+                        security::SecurityAwareLogger::instance().log(
+                            security::SecurityAwareLogger::Level::Error,
+                            "[OrderBook Arena Init Failed] Exception: {}",
+                            ex.what());
                     } catch (...) {
                         arena = nullptr;
                         arena_buffer = nullptr;
-                        SAFE_LOG(ERROR) << "[OrderBook Arena Init Failed] Unknown exception. Fallback activated.";
+                        security::SecurityAwareLogger::instance().log(
+                            security::SecurityAwareLogger::Level::Error,
+                            "[OrderBook Arena Init Failed] Unknown exception. Fallback activated.");
                     }
                 } else {
-                    SAFE_LOG(WARN) << "[OrderBook] ArenaAllocator not used. Fallback to std::vector.";
+                    security::SecurityAwareLogger::instance().log(
+                        security::SecurityAwareLogger::Level::Warn,
+                        "[OrderBook] ArenaAllocator not used. Fallback to std::vector.");
                 }
             }
 
@@ -57,7 +67,10 @@ namespace engine {
                 if (arena) {
                     if (arena_count >= max_orders) {
                         ++arena_failures;
-                        SAFE_LOG(WARN) << "[Arena Overflow] Full (" << arena_count << "/" << max_orders << ")";
+                        security::SecurityAwareLogger::instance().log(
+                            security::SecurityAwareLogger::Level::Warn,
+                            "[Arena Overflow] Full ({}/{})",
+                            arena_count, max_orders);
                         return;
                     }
 
@@ -66,7 +79,9 @@ namespace engine {
                         new (target) Order(o.price, o.amount, o.timestamp);  // placement new
                     } catch (...) {
                         ++arena_failures;
-                        SAFE_LOG(WARN) << "[Arena Memory Exhausted]";
+                        security::SecurityAwareLogger::instance().log(
+                            security::SecurityAwareLogger::Level::Warn,
+                            "[Arena Memory Exhausted]");
                         return;
                     }
                 } else {

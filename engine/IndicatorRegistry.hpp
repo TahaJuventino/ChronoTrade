@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../core/EngineConfig.hpp"
-#include "../utils/logger.h"
+#include "../security/SecurityAwareLogger.hpp"
 #include "../engine/IIndicator.hpp"
 #include "../core/Candlestick.hpp"
 
@@ -18,14 +18,20 @@ namespace engine {
             inline void register_indicator(const std::string& name, std::shared_ptr<IIndicator> indicator) {
                 std::lock_guard<std::mutex> lock(mutex);
                 indicators[name] = std::move(indicator);
-                SAFE_LOG(INFO) << "[Indicator Registered] " << name;
+                security::SecurityAwareLogger::instance().log(
+                    security::SecurityAwareLogger::Level::Info,
+                    "[Indicator Registered] {}",
+                    name);
             }
 
             inline void update_all(const Candlestick& candle) {
                 std::lock_guard<std::mutex> lock(mutex);
                 for (auto& [name, indicator] : indicators) {
                     indicator->update(candle);
-                    SAFE_LOG(INFO) << "[Indicator Updated] " << name;
+                    security::SecurityAwareLogger::instance().log(
+                        security::SecurityAwareLogger::Level::Info,
+                        "[Indicator Updated] {}",
+                        name);
                 }
             }
 
@@ -35,7 +41,10 @@ namespace engine {
                 for (const auto& [name, indicator] : indicators) {
                     auto sig = indicator->signal();
                     signals.push_back(sig);
-                    SAFE_LOG(INFO) << "[Signal] " << name << ": " << sig;
+                    security::SecurityAwareLogger::instance().log(
+                        security::SecurityAwareLogger::Level::Info,
+                        "[Signal] {}: {}",
+                        name, sig);
                 }
                 return signals;
             }
@@ -43,7 +52,9 @@ namespace engine {
             inline void reset() {
                 std::lock_guard<std::mutex> lock(mutex);
                 indicators.clear();
-                SAFE_LOG(INFO) << "[Registry Reset]";
+                security::SecurityAwareLogger::instance().log(
+                    security::SecurityAwareLogger::Level::Info,
+                    "[Registry Reset]");
             }
 
             inline std::size_t count() const {

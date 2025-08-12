@@ -69,6 +69,7 @@ target_include_directories(ChronoTrade PRIVATE
   ${PROJECT_SOURCE_DIR}/core
   ${PROJECT_SOURCE_DIR}/utils
   ${PROJECT_SOURCE_DIR}/security
+  ${PROJECT_SOURCE_DIR}/observability
   ${PROJECT_SOURCE_DIR}/threads
 )
 
@@ -374,6 +375,7 @@ target_include_directories(test_zero_copy_csv_parser PRIVATE
     ${PROJECT_SOURCE_DIR}
     ${PROJECT_SOURCE_DIR}/feed
 )
+# Replace the conflicted section (lines ~380-420) with this:
 
 target_compile_options(test_zero_copy_csv_parser PRIVATE
     -Wall -Wextra -Werror
@@ -382,24 +384,49 @@ target_compile_options(test_zero_copy_csv_parser PRIVATE
     -fcf-protection=full -fstack-clash-protection
 )
 
-# Apply sanitizer options project-wide
+# ---- Security Macros Tests ----
+add_executable(test_security_macros tests/test_security_macros.cpp)
+target_link_libraries(test_security_macros PRIVATE GTest::gtest_main)
+target_include_directories(test_security_macros PRIVATE
+    ${PROJECT_SOURCE_DIR}/tests
+)
+
+# ========== PROJECT-WIDE SANITIZER APPLICATION ==========
+# Apply sanitizer options to all targets for comprehensive security testing
 get_property(ALL_TARGETS DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY BUILDSYSTEM_TARGETS)
 
 foreach(tgt ${ALL_TARGETS})
-  if(ENABLE_ASAN)
-    target_compile_options(${tgt} PRIVATE -fsanitize=address)
-    target_link_options(${tgt} PRIVATE -fsanitize=address)
-  endif()
-  if(ENABLE_TSAN)
-    target_compile_options(${tgt} PRIVATE -fsanitize=thread)
-    target_link_options(${tgt} PRIVATE -fsanitize=thread)
-  endif()
-  if(ENABLE_UBSAN)
-    target_compile_options(${tgt} PRIVATE -fsanitize=undefined)
-    target_link_options(${tgt} PRIVATE -fsanitize=undefined)
-  endif()
-  if(ENABLE_CFI)
-    target_compile_options(${tgt} PRIVATE -fsanitize=cfi -fvisibility=hidden -flto)
-    target_link_options(${tgt} PRIVATE -fsanitize=cfi -fvisibility=hidden -flto)
+  # Skip system/external targets that might conflict
+  get_target_property(tgt_type ${tgt} TYPE)
+  if(NOT tgt_type STREQUAL "INTERFACE_LIBRARY")
+    
+    if(ENABLE_ASAN)
+      target_compile_options(${tgt} PRIVATE -fsanitize=address)
+      target_link_options(${tgt} PRIVATE -fsanitize=address)
+    endif()
+    
+    if(ENABLE_TSAN)
+      target_compile_options(${tgt} PRIVATE -fsanitize=thread)
+      target_link_options(${tgt} PRIVATE -fsanitize=thread)
+    endif()
+    
+    if(ENABLE_UBSAN)
+      target_compile_options(${tgt} PRIVATE -fsanitize=undefined)
+      target_link_options(${tgt} PRIVATE -fsanitize=undefined)
+    endif()
+    
+    if(ENABLE_CFI)
+      target_compile_options(${tgt} PRIVATE -fsanitize=cfi -fvisibility=hidden -flto)
+      target_link_options(${tgt} PRIVATE -fsanitize=cfi -fvisibility=hidden -flto)
+    endif()
   endif()
 endforeach()
+
+# ========== HARDENING VALIDATION ==========
+message(STATUS "Security Configuration:")
+message(STATUS "  ASAN: ${ENABLE_ASAN}")
+message(STATUS "  TSAN: ${ENABLE_TSAN}")  
+message(STATUS "  UBSAN: ${ENABLE_UBSAN}")
+message(STATUS "  CFI: ${ENABLE_CFI}")
+message(STATUS "  Fortify: D_FORTIFY_SOURCE=3")
+message(STATUS "  Stack Protection: -fstack-protector-strong + clash protection")

@@ -3,6 +3,7 @@
 #include <queue>
 #include <mutex>
 #include "../feed/SocketFeedSource.hpp"
+#include "../utils/Panic.hpp"
 
 #ifdef _WIN32
 #include <winsock2.h>
