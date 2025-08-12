@@ -3,7 +3,7 @@
 #include "../core/Order.hpp"
 #include "../core/AuthFlags.hpp"
 #include "../utils/logger.h"
-#include "../external/json.hpp"
+#include "../utils/json.hpp"
 #include "../security/FeedHashLogger.hpp"  
 #include "FeedTelemetry.hpp"
 #include "IFeedSource.hpp"
