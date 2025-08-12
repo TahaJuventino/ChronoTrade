@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  init:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential cmake ninja-build
+      - name: Configure
+        run: cmake -S . -B build
+      - name: Build
+        run: cmake --build build
+
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential cmake ninja-build lcov libgtest-dev
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="--coverage" -DCMAKE_C_FLAGS="--coverage"
+      - name: Build
+        run: cmake --build build
+      - name: Run tests
+        run: cd build && ctest --output-on-failure
+      - name: Collect coverage
+        run: |
+          cd build
+          lcov --capture --directory . --output-file coverage.info
+          lcov --remove coverage.info '/usr/*' --output-file coverage.info
+          lcov --list coverage.info
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: build/coverage.info
+
+  fuzz:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y clang build-essential
+      - name: Build fuzzer
+        if: ${{ hashFiles('fuzz/FeedFuzzer.cpp') != '' }}
+        run: clang++ -std=c++23 -fsanitize=fuzzer,address -I./feed -I./core -I./utils fuzz/FeedFuzzer.cpp -o fuzz_feedfuzzer
+      - name: Run fuzzer
+        if: ${{ hashFiles('fuzz/FeedFuzzer.cpp') != '' }}
+        run: ./fuzz_feedfuzzer -max_total_time=60
+      - name: No fuzz target
+        if: ${{ hashFiles('fuzz/FeedFuzzer.cpp') == '' }}
+        run: echo 'No fuzz target found; skipping.'
