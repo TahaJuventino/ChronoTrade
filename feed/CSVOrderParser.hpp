@@ -2,7 +2,7 @@
 
 #include "OrderParser.hpp"
 #include "../core/EngineConfig.hpp"
-#include "../utils/logger.h"
+#include "../security/SecurityAwareLogger.hpp"
 
 #include <sstream>
 #include <vector>
@@ -21,7 +21,10 @@ namespace feed {
                 }
 
                 if (tokens.size() != 3) {
-                    SAFE_LOG(LOG_WARN) << "[Malformed CSV] Incorrect number of fields: " << line;
+                    security::SecurityAwareLogger::instance().log(
+                        security::SecurityAwareLogger::Level::Warn,
+                        "[Malformed CSV] Incorrect number of fields: {}",
+                        line);
                     return { engine::Order(1.0, 1.0, 1'725'000'000), engine::AuthFlags::MALFORMED };
                 }
 
@@ -31,24 +34,36 @@ namespace feed {
                     std::int64_t timestamp = std::stoll(tokens[2]);
 
                     if (price < engine::Order::MIN_PRICE || price > engine::Order::MAX_PRICE) {
-                        SAFE_LOG(LOG_WARN) << "[Suspicious Price] " << price;
+                        security::SecurityAwareLogger::instance().log(
+                            security::SecurityAwareLogger::Level::Warn,
+                            "[Suspicious Price] {}",
+                            price);
                         return { engine::Order(1.0, 1.0, 1'725'000'000), engine::AuthFlags::SUSPICIOUS };
                     }
 
                     if (amount < engine::Order::MIN_AMOUNT || amount > engine::Order::MAX_AMOUNT) {
-                        SAFE_LOG(LOG_WARN) << "[Suspicious Amount] " << amount;
+                        security::SecurityAwareLogger::instance().log(
+                            security::SecurityAwareLogger::Level::Warn,
+                            "[Suspicious Amount] {}",
+                            amount);
                         return { engine::Order(1.0, 1.0, 1'725'000'000), engine::AuthFlags::SUSPICIOUS };
                     }
 
                     if (timestamp < engine::Order::MIN_TIMESTAMP || timestamp > engine::Order::MAX_TIMESTAMP) {
-                        SAFE_LOG(LOG_WARN) << "[Suspicious Timestamp] " << timestamp;
+                        security::SecurityAwareLogger::instance().log(
+                            security::SecurityAwareLogger::Level::Warn,
+                            "[Suspicious Timestamp] {}",
+                            timestamp);
                         return { engine::Order(1.0, 1.0, 1'725'000'000), engine::AuthFlags::SUSPICIOUS };
                     }
 
                     return { engine::Order(price, amount, timestamp), engine::AuthFlags::TRUSTED };
 
                 } catch (...) {
-                    SAFE_LOG(LOG_ERROR) << "[Malformed CSV] Failed to parse fields: " << line;
+                    security::SecurityAwareLogger::instance().log(
+                        security::SecurityAwareLogger::Level::Error,
+                        "[Malformed CSV] Failed to parse fields: {}",
+                        line);
                     return { engine::Order(1.0, 1.0, 1'725'000'000), engine::AuthFlags::MALFORMED };
                 }
             }

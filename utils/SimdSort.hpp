@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../core/Order.hpp"
-#include "../utils/logger.h"
+#include "../security/SecurityAwareLogger.hpp"
 
 #include <vector>
 #include <algorithm>
@@ -33,7 +33,10 @@ namespace utils {
         std::ostringstream oss;
         oss << "[SIMD Sort] Sorted " << orders.size() << " orders in "
             << std::fixed << std::setprecision(3) << duration_us << " µs.";
-        SAFE_LOG(INFO) << oss.str();
+        security::SecurityAwareLogger::instance().log(
+            security::SecurityAwareLogger::Level::Info,
+            "{}",
+            oss.str());
     }
 
 }

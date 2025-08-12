@@ -16,23 +16,30 @@ if(CCACHE_PROGRAM)
   message(STATUS "🚀 ccache enabled")
 endif()
 
-set(CMAKE_CXX_STANDARD 20)
+# ========== C++23 STANDARD (CUTTING EDGE) ==========
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# ========== CI/CD OPTIONS ==========
 option(ENABLE_COVERAGE "Enable coverage reporting" OFF)
+option(BUILD_FUZZERS "Build fuzz targets" OFF)
+option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
+option(ENABLE_TSAN "Enable ThreadSanitizer" OFF)
+option(ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer" OFF)
+option(ENABLE_CFI "Enable Control Flow Integrity" OFF)
+
+# Coverage configuration
 if(ENABLE_COVERAGE)
   add_compile_options(-fprofile-arcs -ftest-coverage)
   add_link_options(-fprofile-arcs -ftest-coverage)
 endif()
 
-
 find_package(Threads REQUIRED)
 
 # ========== GIT COMMIT HASH INJECTION ==========
-
 execute_process(
   COMMAND git rev-parse --short HEAD
   OUTPUT_VARIABLE GIT_COMMIT_HASH
@@ -42,7 +49,6 @@ execute_process(
 add_compile_definitions(BUILD_HASH="${GIT_COMMIT_HASH}")
 
 # ========== MAIN APP ==========
-
 file(GLOB_RECURSE CORE_SRC CONFIGURE_DEPENDS
     "core/*.cpp" "engine/*.cpp"
     "feed/*.cpp" "feed/*/*.cpp"
@@ -56,10 +62,12 @@ list(FILTER CORE_SRC EXCLUDE REGEX "feed/TCPLatencyProxy.cpp")
 
 add_executable(ChronoTrade ${CORE_SRC} main.cpp)
 
+# ========== MAXIMUM HARDENING OPTIONS ==========
 target_compile_options(ChronoTrade PRIVATE
   -Wall -Wextra -Werror -pedantic
-  -fstack-protector-strong
-  -D_FORTIFY_SOURCE=2
+  -Wformat=2 -Wformat-security -Wstack-protector
+  -fstack-protector-strong -D_FORTIFY_SOURCE=3
+  -fcf-protection=full -fstack-clash-protection
   -fno-omit-frame-pointer
 )
 
@@ -70,17 +78,21 @@ target_include_directories(ChronoTrade PRIVATE
   ${PROJECT_SOURCE_DIR}/core
   ${PROJECT_SOURCE_DIR}/utils
   ${PROJECT_SOURCE_DIR}/security
+  ${PROJECT_SOURCE_DIR}/observability
   ${PROJECT_SOURCE_DIR}/threads
 )
 
 add_compile_definitions(ENABLE_LOGS=0) # Disable logs by default
 
+# ========== SANITIZER VARIANTS FOR CI TESTING ==========
+# Function to create sanitizer-specific builds for parallel CI execution
 function(add_sanitizer_target suffix flags)
   add_executable(ChronoTrade_${suffix} EXCLUDE_FROM_ALL ${CORE_SRC} main.cpp)
   target_compile_options(ChronoTrade_${suffix} PRIVATE
     -Wall -Wextra -Werror -pedantic
-    -fstack-protector-strong
-    -D_FORTIFY_SOURCE=2
+    -Wformat=2 -Wformat-security -Wstack-protector
+    -fstack-protector-strong -D_FORTIFY_SOURCE=3
+    -fcf-protection=full -fstack-clash-protection
     -fno-omit-frame-pointer
     ${flags}
   )
@@ -91,18 +103,18 @@ function(add_sanitizer_target suffix flags)
     ${PROJECT_SOURCE_DIR}/core
     ${PROJECT_SOURCE_DIR}/utils
     ${PROJECT_SOURCE_DIR}/security
+    ${PROJECT_SOURCE_DIR}/observability
     ${PROJECT_SOURCE_DIR}/threads
   )
 endfunction()
 
+# Create CI-specific sanitizer variants
 add_sanitizer_target(asan "-fsanitize=address")
 add_sanitizer_target(tsan "-fsanitize=thread")
 add_sanitizer_target(ubsan "-fsanitize=undefined")
 add_sanitizer_target(cfi "-fsanitize=cfi -flto -fvisibility=hidden")
 
 # ========== GTEST-BASED TESTS ==========
-
-# Find GoogleTest if available (MSYS2: pacman -S mingw-w64-x86_64-gtest)
 find_package(GTest REQUIRED)
 
 # ---- Order Tests ----
@@ -248,7 +260,6 @@ target_link_libraries(test_feed_manager
     OpenSSL::Crypto
 )
 
-
 # ---- CSV FeedSource Tests ----
 add_executable(test_csv_feedsource tests/test_csv_feedsource.cpp)
 
@@ -263,7 +274,6 @@ target_link_libraries(test_csv_feedsource
     GTest::gtest_main
     OpenSSL::Crypto
 )
-
 
 # ---- Indicator Tests ----
 add_executable(test_indicators tests/test_indicators.cpp)
@@ -403,11 +413,74 @@ target_include_directories(test_zero_copy_csv_parser PRIVATE
 
 target_compile_options(test_zero_copy_csv_parser PRIVATE
     -Wall -Wextra -Werror
-    -Wformat-security
-    -fstack-protector-strong
-    -D_FORTIFY_SOURCE=2
+    -Wformat=2 -Wformat-security -Wstack-protector
+    -fstack-protector-strong -D_FORTIFY_SOURCE=3
+    -fcf-protection=full -fstack-clash-protection
 )
-option(BUILD_FUZZERS "Build fuzz targets" OFF)
+
+# ---- Security Macros Tests ----
+add_executable(test_security_macros tests/test_security_macros.cpp)
+target_link_libraries(test_security_macros PRIVATE GTest::gtest_main)
+target_include_directories(test_security_macros PRIVATE
+    ${PROJECT_SOURCE_DIR}/tests
+)
+
+# ========== FUZZING INFRASTRUCTURE ==========
 if(BUILD_FUZZERS)
   add_subdirectory(fuzz)
 endif()
+
+# ========== PROJECT-WIDE SANITIZER APPLICATION ==========
+# Apply sanitizer options to all targets for comprehensive security testing
+get_property(ALL_TARGETS DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY BUILDSYSTEM_TARGETS)
+
+foreach(tgt ${ALL_TARGETS})
+  # Skip system/external targets that might conflict
+  get_target_property(tgt_type ${tgt} TYPE)
+  if(NOT tgt_type STREQUAL "INTERFACE_LIBRARY")
+    
+    if(ENABLE_ASAN)
+      target_compile_options(${tgt} PRIVATE -fsanitize=address)
+      target_link_options(${tgt} PRIVATE -fsanitize=address)
+    endif()
+    
+    if(ENABLE_TSAN)
+      target_compile_options(${tgt} PRIVATE -fsanitize=thread)
+      target_link_options(${tgt} PRIVATE -fsanitize=thread)
+    endif()
+    
+    if(ENABLE_UBSAN)
+      target_compile_options(${tgt} PRIVATE -fsanitize=undefined)
+      target_link_options(${tgt} PRIVATE -fsanitize=undefined)
+    endif()
+    
+    if(ENABLE_CFI)
+      target_compile_options(${tgt} PRIVATE -fsanitize=cfi -fvisibility=hidden -flto)
+      target_link_options(${tgt} PRIVATE -fsanitize=cfi -fvisibility=hidden -flto)
+    endif()
+  endif()
+endforeach()
+
+# ========== CI/CD + SECURITY VALIDATION ==========
+message(STATUS "🛡️ Security Configuration:")
+message(STATUS "  C++ Standard: ${CMAKE_CXX_STANDARD}")
+message(STATUS "  ASAN: ${ENABLE_ASAN}")
+message(STATUS "  TSAN: ${ENABLE_TSAN}")  
+message(STATUS "  UBSAN: ${ENABLE_UBSAN}")
+message(STATUS "  CFI: ${ENABLE_CFI}")
+message(STATUS "  Coverage: ${ENABLE_COVERAGE}")
+message(STATUS "  Fuzzing: ${BUILD_FUZZERS}")
+message(STATUS "  Fortify: D_FORTIFY_SOURCE=3")
+message(STATUS "  Stack Protection: -fstack-protector-strong + clash protection")
+message(STATUS "  Build Hash: ${GIT_COMMIT_HASH}")
+
+# ========== CI TARGETS ==========
+add_custom_target(ci_all
+  DEPENDS ChronoTrade test_order test_csv_parser test_candlestick test_orderbook
+  COMMENT "Build all CI targets"
+)
+
+add_custom_target(ci_sanitizers
+  DEPENDS ChronoTrade_asan ChronoTrade_tsan ChronoTrade_ubsan ChronoTrade_cfi
+  COMMENT "Build all sanitizer variants for CI"
+)

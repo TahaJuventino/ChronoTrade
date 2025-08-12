@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../core/EngineConfig.hpp"
-#include "../utils/logger.h"
+#include "../security/SecurityAwareLogger.hpp"
 #include "../engine/IIndicator.hpp"
 #include "../core/Candlestick.hpp"
 #include "../utils/FixedWindow.hpp"
@@ -33,8 +33,10 @@ namespace engine {
                     last_sma = sum / static_cast<double>(window.size());
                 }
 
-                SAFE_LOG(INFO) << "[SMA Update] Close=" << close
-                            << ", SMA=" << last_sma;
+                security::SecurityAwareLogger::instance().log(
+                    security::SecurityAwareLogger::Level::Info,
+                    "[SMA Update] Close={} SMA={}",
+                    close, last_sma);
             }
 
             std::string signal() const override {
@@ -47,10 +49,10 @@ namespace engine {
                 else if (curr < last_sma && prev >= last_sma) sig = "sell";
                 else sig = "hold";
 
-                SAFE_LOG(INFO) << "[SMA Signal] SMA=" << last_sma
-                            << ", Prev=" << prev
-                            << ", Curr=" << curr
-                            << " → Signal=" << sig;
+                security::SecurityAwareLogger::instance().log(
+                    security::SecurityAwareLogger::Level::Info,
+                    "[SMA Signal] SMA={} Prev={} Curr={} → Signal={}",
+                    last_sma, prev, curr, sig);
 
                 return sig;
             }
