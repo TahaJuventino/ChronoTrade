@@ -375,3 +375,10 @@ target_compile_options(test_zero_copy_csv_parser PRIVATE
     -fstack-protector-strong
     -D_FORTIFY_SOURCE=2
 )
+# ---- Security Macros Tests ----
+add_executable(test_security_macros tests/test_security_macros.cpp)
+target_link_libraries(test_security_macros PRIVATE GTest::gtest_main)
+target_include_directories(test_security_macros PRIVATE
+    ${PROJECT_SOURCE_DIR}/tests
+)
+
