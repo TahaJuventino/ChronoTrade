@@ -16,11 +16,16 @@ if(CCACHE_PROGRAM)
   message(STATUS "🚀 ccache enabled")
 endif()
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
+option(ENABLE_TSAN "Enable ThreadSanitizer" OFF)
+option(ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer" OFF)
+option(ENABLE_CFI "Enable Control Flow Integrity" OFF)
 
 find_package(Threads REQUIRED)
 
@@ -51,8 +56,9 @@ add_executable(ChronoTrade ${CORE_SRC} main.cpp)
 
 target_compile_options(ChronoTrade PRIVATE
   -Wall -Wextra -Werror -pedantic
-  -fstack-protector-strong
-  -D_FORTIFY_SOURCE=2
+  -Wformat=2 -Wformat-security -Wstack-protector
+  -fstack-protector-strong -D_FORTIFY_SOURCE=3
+  -fcf-protection=full -fstack-clash-protection
   -fno-omit-frame-pointer
 )
 
@@ -371,7 +377,29 @@ target_include_directories(test_zero_copy_csv_parser PRIVATE
 
 target_compile_options(test_zero_copy_csv_parser PRIVATE
     -Wall -Wextra -Werror
-    -Wformat-security
-    -fstack-protector-strong
-    -D_FORTIFY_SOURCE=2
+    -Wformat=2 -Wformat-security -Wstack-protector
+    -fstack-protector-strong -D_FORTIFY_SOURCE=3
+    -fcf-protection=full -fstack-clash-protection
 )
+
+# Apply sanitizer options project-wide
+get_property(ALL_TARGETS DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY BUILDSYSTEM_TARGETS)
+
+foreach(tgt ${ALL_TARGETS})
+  if(ENABLE_ASAN)
+    target_compile_options(${tgt} PRIVATE -fsanitize=address)
+    target_link_options(${tgt} PRIVATE -fsanitize=address)
+  endif()
+  if(ENABLE_TSAN)
+    target_compile_options(${tgt} PRIVATE -fsanitize=thread)
+    target_link_options(${tgt} PRIVATE -fsanitize=thread)
+  endif()
+  if(ENABLE_UBSAN)
+    target_compile_options(${tgt} PRIVATE -fsanitize=undefined)
+    target_link_options(${tgt} PRIVATE -fsanitize=undefined)
+  endif()
+  if(ENABLE_CFI)
+    target_compile_options(${tgt} PRIVATE -fsanitize=cfi -fvisibility=hidden -flto)
+    target_link_options(${tgt} PRIVATE -fsanitize=cfi -fvisibility=hidden -flto)
+  endif()
+endforeach()
