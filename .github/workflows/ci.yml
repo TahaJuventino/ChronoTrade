@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang clang-tidy cppcheck lcov gcovr ninja-build libgtest-dev
+          sudo cmake -S /usr/src/gtest -B /usr/src/gtest/build
+          sudo cmake --build /usr/src/gtest/build
+          sudo cp /usr/src/gtest/build/lib/*.a /usr/lib
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DENABLE_COVERAGE=ON
+      - name: Build
+        run: cmake --build build
+      - name: Run tests
+        run: ctest --test-dir build --output-on-failure
+      - name: clang-tidy
+        run: ./scripts/run-clang-tidy.sh
+      - name: cppcheck
+        run: ./scripts/run-cppcheck.sh
+      - name: Coverage
+        run: ./scripts/run-coverage.sh
+
+  fuzz:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install clang
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang
+      - name: Build and run fuzzers
+        run: ./fuzz/run_fuzz.sh

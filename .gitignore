@@ -1,4 +1,5 @@
 build/
+build-fuzz/
 *.exe
 *.o
 *.obj
@@ -6,6 +7,10 @@ build/
 *.log
 *.tmp
 *.json
+*.gcno
+*.gcda
+*.lcov
+coverage.info
 .DS_Store
 CMakeFiles/
 CMakeCache.txt
