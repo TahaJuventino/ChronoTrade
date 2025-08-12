@@ -17,6 +17,31 @@ namespace utils {
             explicit ArenaAllocator(std::size_t size)
                 : buffer(new std::uint8_t[size]), capacity(size), offset(0) {}
 
+            // Disable copy semantics to avoid double-free and ownership issues
+            ArenaAllocator(const ArenaAllocator&) = delete;
+            ArenaAllocator& operator=(const ArenaAllocator&) = delete;
+
+            // Enable move semantics for safe ownership transfer
+            ArenaAllocator(ArenaAllocator&& other) noexcept
+                : buffer(other.buffer), capacity(other.capacity), offset(other.offset) {
+                other.buffer = nullptr;
+                other.capacity = 0;
+                other.offset = 0;
+            }
+
+            ArenaAllocator& operator=(ArenaAllocator&& other) noexcept {
+                if (this != &other) {
+                    delete[] buffer;
+                    buffer = other.buffer;
+                    capacity = other.capacity;
+                    offset = other.offset;
+                    other.buffer = nullptr;
+                    other.capacity = 0;
+                    other.offset = 0;
+                }
+                return *this;
+            }
+
             ~ArenaAllocator() {
                 delete[] buffer;
             }
