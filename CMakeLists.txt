@@ -22,6 +22,13 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+option(ENABLE_COVERAGE "Enable coverage reporting" OFF)
+if(ENABLE_COVERAGE)
+  add_compile_options(-fprofile-arcs -ftest-coverage)
+  add_link_options(-fprofile-arcs -ftest-coverage)
+endif()
+
+
 find_package(Threads REQUIRED)
 
 # ========== GIT COMMIT HASH INJECTION ==========
@@ -67,6 +74,31 @@ target_include_directories(ChronoTrade PRIVATE
 )
 
 add_compile_definitions(ENABLE_LOGS=0) # Disable logs by default
+
+function(add_sanitizer_target suffix flags)
+  add_executable(ChronoTrade_${suffix} EXCLUDE_FROM_ALL ${CORE_SRC} main.cpp)
+  target_compile_options(ChronoTrade_${suffix} PRIVATE
+    -Wall -Wextra -Werror -pedantic
+    -fstack-protector-strong
+    -D_FORTIFY_SOURCE=2
+    -fno-omit-frame-pointer
+    ${flags}
+  )
+  target_link_options(ChronoTrade_${suffix} PRIVATE ${flags})
+  target_link_libraries(ChronoTrade_${suffix} PRIVATE Threads::Threads)
+  target_include_directories(ChronoTrade_${suffix} PRIVATE
+    ${PROJECT_SOURCE_DIR}/feed
+    ${PROJECT_SOURCE_DIR}/core
+    ${PROJECT_SOURCE_DIR}/utils
+    ${PROJECT_SOURCE_DIR}/security
+    ${PROJECT_SOURCE_DIR}/threads
+  )
+endfunction()
+
+add_sanitizer_target(asan "-fsanitize=address")
+add_sanitizer_target(tsan "-fsanitize=thread")
+add_sanitizer_target(ubsan "-fsanitize=undefined")
+add_sanitizer_target(cfi "-fsanitize=cfi -flto -fvisibility=hidden")
 
 # ========== GTEST-BASED TESTS ==========
 
@@ -375,3 +407,7 @@ target_compile_options(test_zero_copy_csv_parser PRIVATE
     -fstack-protector-strong
     -D_FORTIFY_SOURCE=2
 )
+option(BUILD_FUZZERS "Build fuzz targets" OFF)
+if(BUILD_FUZZERS)
+  add_subdirectory(fuzz)
+endif()
