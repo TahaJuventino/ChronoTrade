@@ -8,6 +8,10 @@
 
 using engine::FixedWindow;
 
+TEST(FixedWindowTest, ZeroCapacityThrows) {
+    EXPECT_THROW(FixedWindow<int> fw(0), std::invalid_argument);
+}
+
 TEST(FixedWindowTest, PushAndRetrieve) {
     FixedWindow<int> fw(3);
     fw.push(10);

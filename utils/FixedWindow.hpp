@@ -10,6 +10,7 @@ namespace engine {
     template<typename T>
     class FixedWindow {
         public:
+            // Constructs a window with the given capacity. Capacity must be at least 1.
             explicit FixedWindow(std::size_t capacity);
 
             void push(const T& value);
@@ -27,7 +28,10 @@ namespace engine {
 
         template<typename T>
         FixedWindow<T>::FixedWindow(std::size_t capacity)
-            : buffer(capacity), max_capacity(capacity) {}
+            : buffer(capacity), max_capacity(capacity) {
+            if (capacity == 0)
+                throw std::invalid_argument("FixedWindow: capacity must be at least 1");
+        }
 
         template<typename T>
         void FixedWindow<T>::push(const T& value) {
