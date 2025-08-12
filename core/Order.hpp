@@ -8,10 +8,7 @@
 #include <cmath>
 #include <sstream>
 
-#include "../utils/logger.h"
-
-#define INFO 1
-#define WARN 2
+#include "../security/SecurityAwareLogger.hpp"
 
 namespace engine {
 
@@ -42,9 +39,10 @@ namespace engine {
                 amount = a;
                 timestamp = ts;
 
-                SAFE_LOG(INFO) << "[Order Created] Price=" << price
-                            << " Amount=" << amount
-                            << " Timestamp=" << timestamp;
+                security::SecurityAwareLogger::instance().log(
+                    security::SecurityAwareLogger::Level::Info,
+                    "[Order Created] Price={:.6f} Amount={:.6f} Timestamp={}",
+                    price, amount, timestamp);
             }
 
             std::string to_string() const {

@@ -3,7 +3,7 @@
 #include "../core/Order.hpp"
 #include "../core/AuthFlags.hpp"
 #include "../core/EngineConfig.hpp"
-#include "../utils/logger.h"
+#include "../security/SecurityAwareLogger.hpp"
 
 namespace feed {
 

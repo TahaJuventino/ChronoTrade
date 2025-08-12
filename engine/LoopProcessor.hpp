@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../core/EngineConfig.hpp"
-#include "../utils/logger.h"
+#include "../security/SecurityAwareLogger.hpp"
 #include "../core/Candlestick.hpp"
 #include "../engine/IndicatorRegistry.hpp"
 
@@ -20,13 +20,17 @@ namespace engine {
             void start() {
                 running = true;
                 loopThread = std::thread([this] { run(); });
-                SAFE_LOG(INFO) << "[LoopProcessor Started]";
+                security::SecurityAwareLogger::instance().log(
+                    security::SecurityAwareLogger::Level::Info,
+                    "[LoopProcessor Started]");
             }
 
             void stop() {
                 running = false;
                 if (loopThread.joinable()) loopThread.join();
-                SAFE_LOG(INFO) << "[LoopProcessor Stopped]";
+                security::SecurityAwareLogger::instance().log(
+                    security::SecurityAwareLogger::Level::Info,
+                    "[LoopProcessor Stopped]");
             }
 
             ~LoopProcessor() {
@@ -34,7 +38,10 @@ namespace engine {
             }
 
             inline void run(const Candlestick& candle) {
-                SAFE_LOG(INFO) << "[Manual Candle Injected] ts=" << candle.start_time;
+                security::SecurityAwareLogger::instance().log(
+                    security::SecurityAwareLogger::Level::Info,
+                    "[Manual Candle Injected] ts={}",
+                    candle.start_time);
                 registry_.update_all(candle);
             }
 
@@ -47,7 +54,10 @@ namespace engine {
                         1.0, tick, tick + 1
                     );
 
-                    SAFE_LOG(INFO) << "[Synthetic Tick] ts=" << tick;
+                    security::SecurityAwareLogger::instance().log(
+                        security::SecurityAwareLogger::Level::Info,
+                        "[Synthetic Tick] ts={}",
+                        tick);
                     registry_.update_all(fake);
                     std::this_thread::sleep_for(std::chrono::milliseconds(interval));
                     ++tick;

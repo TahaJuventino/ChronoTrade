@@ -6,9 +6,7 @@
 #include <sstream>
 #include <iomanip>
 
-#include "../utils/logger.h"
-
-#define INFO 1
+#include "../security/SecurityAwareLogger.hpp"
 
 namespace engine {
 
@@ -36,7 +34,10 @@ namespace engine {
                 if (volume < 0)
                     throw std::invalid_argument("Negative volume");
 
-                SAFE_LOG(INFO) << "[Candle Created] " << to_string();
+                security::SecurityAwareLogger::instance().log(
+                    security::SecurityAwareLogger::Level::Info,
+                    "[Candle Created] {}",
+                    to_string());
             }
 
             std::string to_string() const {

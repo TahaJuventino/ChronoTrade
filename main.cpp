@@ -1,25 +1,31 @@
-#include "utils/logger.h"
+#include "security/SecurityAwareLogger.hpp"
+#include "observability/Observability.hpp"
+#include "utils/Panic.hpp"
 
 void verify_build_flags() {
 #if !defined(__OPTIMIZE__)
-    LOG(LOG_WARN);
-    std::cerr << "[WARN] Built without optimizations (-O2)\n";
+    security::SecurityAwareLogger::instance().log(
+        security::SecurityAwareLogger::Level::Warn,
+        "Built without optimizations (-O2)");
 #endif
 #if !defined(__GNUC__)
     PANIC("Unsupported compiler");
 #endif
 #ifdef __SANITIZE_ADDRESS__
-    LOG(INFO);
-    std::cerr << "AddressSanitizer is enabled.\n";
+    security::SecurityAwareLogger::instance().log(
+        security::SecurityAwareLogger::Level::Info,
+        "AddressSanitizer is enabled.");
 #endif
 }
 
 int main() {
     verify_build_flags();  // Audit build environment
 
-    LOG(LOG_INFO);
+    security::SecurityAwareLogger::instance().log(
+        security::SecurityAwareLogger::Level::Info,
+        "ChronoTrade system initialized.");
 
-    std::cerr << "ChronoTrade system initialized.\n";
+    observability::Observability::instance().trace("startup", [] {});
 
     std::cerr << "Build hash: " << BUILD_HASH << std::endl;
 

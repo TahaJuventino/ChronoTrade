@@ -3,7 +3,7 @@
 #include "../core/Order.hpp"
 #include "../utils/SimdSort.hpp"
 #include "../utils/SimdSortAvx.hpp"
-#include "../utils/logger.h"
+#include "../security/SecurityAwareLogger.hpp"
 #include <vector>
 #include <random>
 #include <chrono>
@@ -34,11 +34,17 @@ inline void benchmark_simd_sort(std::size_t count = 10000) {
     auto dur1 = std::chrono::duration_cast<std::chrono::microseconds>(end1 - start1).count();
     auto dur2 = std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2).count();
 
-    SAFE_LOG(INFO) << "[Benchmark] simd_sort_desc = " << dur1 << "us | simd_sort_desc_avx = " << dur2 << "us";
+    security::SecurityAwareLogger::instance().log(
+        security::SecurityAwareLogger::Level::Info,
+        "[Benchmark] simd_sort_desc = {}us | simd_sort_desc_avx = {}us",
+        dur1, dur2);
 
     for (std::size_t i = 0; i < count; ++i) {
         if (ref[i].price != avx[i].price) {
-            SAFE_LOG(ERROR) << "[Mismatch] index=" << i << " | ref=" << ref[i].price << " | avx=" << avx[i].price;
+            security::SecurityAwareLogger::instance().log(
+                security::SecurityAwareLogger::Level::Error,
+                "[Mismatch] index={} | ref={} | avx={}",
+                i, ref[i].price, avx[i].price);
             break;
         }
     }

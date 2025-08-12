@@ -1,10 +1,6 @@
 #pragma once
 
-#include "../utils/logger.h"
-
-#define INFO 1
-#define WARN 2
-#define ERROR 3
+#include "../security/SecurityAwareLogger.hpp"
 
 namespace engine {
 
