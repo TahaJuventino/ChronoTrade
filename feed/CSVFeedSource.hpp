@@ -150,9 +150,8 @@ namespace feed {
             std::atomic<bool> stop_flag_;
 
             bool parse_line(const std::string& line, double& price, double& amount, int64_t& timestamp) {
-                // ASCII check moved here
-                for (unsigned char c : line) {
-                    if (c < 32 || c > 126) return false;
+                if (!is_ascii_printable(line)) {
+                    return false;
                 }
 
                 std::istringstream ss(line);
