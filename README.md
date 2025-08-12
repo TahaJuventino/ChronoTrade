@@ -87,8 +87,3 @@ ctest --output-on-failure
 ## **📜 Mission Statement**
 
 > "A multi-threaded RSI candlestick engine built with OS-level principles, infused with red team simulation and financial logic."
-
----
-
-If you want, I can now **merge this into your existing `README.md` in the repo** so that the build and module info matches your current Phase 3 state. This way, the repo reflects exactly where the project is in the phases.
-
