@@ -28,6 +28,8 @@
 #endif
 
 // Global constants accessible everywhere
+// kMaxPackets retained for backward compatibility with tests and simulators
+// but the ring buffer can now be sized dynamically via buffer_capacity_.
 constexpr size_t kMaxPackets = 1024;
 constexpr size_t kPacketSize = 256;
 
@@ -37,10 +39,12 @@ struct Packet {
     uint16_t _padding; // Explicit padding for alignment
 };
 
+// RingBuffer now supports a dynamically sized packets array. The struct is
+// allocated with enough space for `buffer_capacity_` packets.
 struct RingBuffer {
     std::atomic<uint32_t> head;
     std::atomic<uint32_t> tail;
-    Packet packets[kMaxPackets];
+    Packet packets[1];  // Flexible array member (actual size set at runtime)
 };
 
 namespace feed {
@@ -65,7 +69,7 @@ namespace feed {
             }
 
             ~SharedMemoryFeedSource() override {
-                if (ring_) munmap(ring_, sizeof(RingBuffer));
+                if (ring_) munmap(ring_, ring_buffer_size());
                 if (fd_ != -1) close(fd_);
             }
 
@@ -77,7 +81,7 @@ namespace feed {
                     uint32_t head = ring_->head.load(std::memory_order_acquire);
 
                     while (local_tail != head) {
-                        const Packet& pkt = ring_->packets[local_tail % kMaxPackets];
+                        const Packet& pkt = ring_->packets[local_tail % buffer_capacity_];
                         
                         if (hash_logger_) {
                             hash_logger_->log_packet(pkt.data, pkt.len, "SHM");
@@ -98,7 +102,7 @@ namespace feed {
                             }
                         }
 
-                        local_tail = (local_tail + 1) % kMaxPackets;
+                        local_tail = (local_tail + 1) % buffer_capacity_;
                         // Update shared tail after processing
                         ring_->tail.store(local_tail, std::memory_order_release);
                     }
@@ -157,13 +161,18 @@ namespace feed {
                 fd_ = shm_open(shm_name_.c_str(), O_RDWR, 0666);
                 if (fd_ < 0) throw std::runtime_error("Failed to open SHM: " + shm_name_);
 
-                if (ftruncate(fd_, sizeof(RingBuffer)) != 0)
+                size_t sz = ring_buffer_size();
+                if (ftruncate(fd_, sz) != 0)
                     throw std::runtime_error("ftruncate failed");
 
-                void* ptr = mmap(nullptr, sizeof(RingBuffer), PROT_READ | PROT_WRITE, MAP_SHARED, fd_, 0);
+                void* ptr = mmap(nullptr, sz, PROT_READ | PROT_WRITE, MAP_SHARED, fd_, 0);
                 if (ptr == MAP_FAILED) throw std::runtime_error("mmap failed");
 
                 ring_ = static_cast<RingBuffer*>(ptr);
+            }
+
+            size_t ring_buffer_size() const {
+                return sizeof(RingBuffer) + (buffer_capacity_ - 1) * sizeof(Packet);
             }
 
             engine::Order parse(const Packet& pkt) {

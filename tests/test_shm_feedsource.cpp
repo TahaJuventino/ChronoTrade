@@ -20,10 +20,12 @@ namespace {
             std::string shm_name_;
             int fd_;
             RingBuffer* ring_;
+            size_t ring_size_;
             
         public:
-            explicit SHMTestFixture(const std::string& name) 
-                : shm_name_(name), fd_(-1), ring_(nullptr) {
+            explicit SHMTestFixture(const std::string& name)
+                : shm_name_(name), fd_(-1), ring_(nullptr),
+                  ring_size_(sizeof(RingBuffer) + (kMaxPackets - 1) * sizeof(Packet)) {
                 cleanup();
                 create_shm();
             }
@@ -36,12 +38,12 @@ namespace {
                 fd_ = shm_open(shm_name_.c_str(), O_CREAT | O_RDWR, 0666);
                 if (fd_ < 0) throw std::runtime_error("Failed to create test SHM: " + shm_name_);
                 
-                if (ftruncate(fd_, sizeof(RingBuffer)) != 0) {
+                if (ftruncate(fd_, ring_size_) != 0) {
                     close(fd_);
                     throw std::runtime_error("ftruncate failed for: " + shm_name_);
                 }
-                
-                void* ptr = mmap(nullptr, sizeof(RingBuffer), PROT_READ | PROT_WRITE, MAP_SHARED, fd_, 0);
+
+                void* ptr = mmap(nullptr, ring_size_, PROT_READ | PROT_WRITE, MAP_SHARED, fd_, 0);
                 if (ptr == MAP_FAILED) {
                     close(fd_);
                     throw std::runtime_error("mmap failed for: " + shm_name_);
@@ -53,7 +55,7 @@ namespace {
                 ring_->tail.store(0, std::memory_order_release);
                 
                 // Zero out packet array for deterministic behavior
-                std::memset(ring_->packets, 0, sizeof(ring_->packets));
+                std::memset(ring_->packets, 0, kMaxPackets * sizeof(Packet));
             }
             
             void inject_packets(const std::vector<std::string>& payloads) {
@@ -86,7 +88,7 @@ namespace {
             
             void cleanup() {
                 if (ring_) {
-                    munmap(ring_, sizeof(RingBuffer));
+                    munmap(ring_, ring_size_);
                     ring_ = nullptr;
                 }
                 if (fd_ != -1) {
