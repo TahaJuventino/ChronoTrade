@@ -16,11 +16,16 @@ if(CCACHE_PROGRAM)
   message(STATUS "🚀 ccache enabled")
 endif()
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
+option(ENABLE_TSAN "Enable ThreadSanitizer" OFF)
+option(ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer" OFF)
+option(ENABLE_CFI "Enable Control Flow Integrity" OFF)
 
 find_package(Threads REQUIRED)
 
@@ -51,8 +56,9 @@ add_executable(ChronoTrade ${CORE_SRC} main.cpp)
 
 target_compile_options(ChronoTrade PRIVATE
   -Wall -Wextra -Werror -pedantic
-  -fstack-protector-strong
-  -D_FORTIFY_SOURCE=2
+  -Wformat=2 -Wformat-security -Wstack-protector
+  -fstack-protector-strong -D_FORTIFY_SOURCE=3
+  -fcf-protection=full -fstack-clash-protection
   -fno-omit-frame-pointer
 )
 
@@ -369,13 +375,15 @@ target_include_directories(test_zero_copy_csv_parser PRIVATE
     ${PROJECT_SOURCE_DIR}
     ${PROJECT_SOURCE_DIR}/feed
 )
+# Replace the conflicted section (lines ~380-420) with this:
 
 target_compile_options(test_zero_copy_csv_parser PRIVATE
     -Wall -Wextra -Werror
-    -Wformat-security
-    -fstack-protector-strong
-    -D_FORTIFY_SOURCE=2
+    -Wformat=2 -Wformat-security -Wstack-protector
+    -fstack-protector-strong -D_FORTIFY_SOURCE=3
+    -fcf-protection=full -fstack-clash-protection
 )
+
 # ---- Security Macros Tests ----
 add_executable(test_security_macros tests/test_security_macros.cpp)
 target_link_libraries(test_security_macros PRIVATE GTest::gtest_main)
@@ -383,3 +391,42 @@ target_include_directories(test_security_macros PRIVATE
     ${PROJECT_SOURCE_DIR}/tests
 )
 
+# ========== PROJECT-WIDE SANITIZER APPLICATION ==========
+# Apply sanitizer options to all targets for comprehensive security testing
+get_property(ALL_TARGETS DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY BUILDSYSTEM_TARGETS)
+
+foreach(tgt ${ALL_TARGETS})
+  # Skip system/external targets that might conflict
+  get_target_property(tgt_type ${tgt} TYPE)
+  if(NOT tgt_type STREQUAL "INTERFACE_LIBRARY")
+    
+    if(ENABLE_ASAN)
+      target_compile_options(${tgt} PRIVATE -fsanitize=address)
+      target_link_options(${tgt} PRIVATE -fsanitize=address)
+    endif()
+    
+    if(ENABLE_TSAN)
+      target_compile_options(${tgt} PRIVATE -fsanitize=thread)
+      target_link_options(${tgt} PRIVATE -fsanitize=thread)
+    endif()
+    
+    if(ENABLE_UBSAN)
+      target_compile_options(${tgt} PRIVATE -fsanitize=undefined)
+      target_link_options(${tgt} PRIVATE -fsanitize=undefined)
+    endif()
+    
+    if(ENABLE_CFI)
+      target_compile_options(${tgt} PRIVATE -fsanitize=cfi -fvisibility=hidden -flto)
+      target_link_options(${tgt} PRIVATE -fsanitize=cfi -fvisibility=hidden -flto)
+    endif()
+  endif()
+endforeach()
+
+# ========== HARDENING VALIDATION ==========
+message(STATUS "Security Configuration:")
+message(STATUS "  ASAN: ${ENABLE_ASAN}")
+message(STATUS "  TSAN: ${ENABLE_TSAN}")  
+message(STATUS "  UBSAN: ${ENABLE_UBSAN}")
+message(STATUS "  CFI: ${ENABLE_CFI}")
+message(STATUS "  Fortify: D_FORTIFY_SOURCE=3")
+message(STATUS "  Stack Protection: -fstack-protector-strong + clash protection")
