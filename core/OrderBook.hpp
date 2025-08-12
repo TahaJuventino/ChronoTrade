@@ -17,8 +17,6 @@
 #define WARN 2
 #define ERROR 3
 
-using namespace std::chrono;
-
 namespace engine {
 
     class OrderBook {
