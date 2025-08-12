@@ -63,6 +63,7 @@ target_include_directories(ChronoTrade PRIVATE
   ${PROJECT_SOURCE_DIR}/core
   ${PROJECT_SOURCE_DIR}/utils
   ${PROJECT_SOURCE_DIR}/security
+  ${PROJECT_SOURCE_DIR}/observability
   ${PROJECT_SOURCE_DIR}/threads
 )
 

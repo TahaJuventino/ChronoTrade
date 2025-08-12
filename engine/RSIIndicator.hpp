@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../core/EngineConfig.hpp"
-#include "../utils/logger.h"
+#include "../security/SecurityAwareLogger.hpp"
 #include "../engine/IIndicator.hpp"
 #include "../core/Candlestick.hpp"
 #include "../utils/FixedWindow.hpp"
@@ -67,10 +67,10 @@ namespace engine {
 
             last_close = candle.close;
 
-            SAFE_LOG(INFO) << "[RSI Update] Close=" << candle.close
-                        << ", Gain=" << gain
-                        << ", Loss=" << loss
-                        << ", RSI=" << rsi;
+            security::SecurityAwareLogger::instance().log(
+                security::SecurityAwareLogger::Level::Info,
+                "[RSI Update] Close={} Gain={} Loss={} RSI={}",
+                candle.close, gain, loss, rsi);
         }
 
         double RSIIndicator::value() const {
@@ -83,7 +83,10 @@ namespace engine {
             else if (rsi <= 30.0) s = "buy";
             else s = "hold";
 
-            SAFE_LOG(INFO) << "[RSI Signal] RSI=" << rsi << " → Signal=" << s;
+            security::SecurityAwareLogger::instance().log(
+                security::SecurityAwareLogger::Level::Info,
+                "[RSI Signal] RSI={} → Signal={}",
+                rsi, s);
             return s;
         }
 

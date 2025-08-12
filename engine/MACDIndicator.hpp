@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../core/EngineConfig.hpp"
-#include "../utils/logger.h"
+#include "../security/SecurityAwareLogger.hpp"
 #include "../engine/IIndicator.hpp"
 #include "../core/Candlestick.hpp"
 #include "../utils/FixedWindow.hpp"
@@ -89,19 +89,23 @@ namespace engine {
 
                 if (lastHistogram <= 0 && histogram > threshold) {
                     lastCrossover = "buy";
-                    SAFE_LOG(INFO) << "[MACD Crossover] Histogram flipped + @ step=" << steps;
+                    security::SecurityAwareLogger::instance().log(
+                        security::SecurityAwareLogger::Level::Info,
+                        "[MACD Crossover] Histogram flipped + @ step={}",
+                        steps);
                 } else if (lastHistogram >= 0 && histogram < -threshold) {
                     lastCrossover = "sell";
-                    SAFE_LOG(INFO) << "[MACD Crossover] Histogram flipped - @ step=" << steps;
+                    security::SecurityAwareLogger::instance().log(
+                        security::SecurityAwareLogger::Level::Info,
+                        "[MACD Crossover] Histogram flipped - @ step={}",
+                        steps);
                 }
             }
 
-            SAFE_LOG(INFO) << "[MACD Update] close=" << close
-                        << ", fast=" << fastEMA
-                        << ", slow=" << slowEMA
-                        << ", MACD=" << macdLine
-                        << ", Signal=" << signalLine
-                        << ", Hist=" << histogram;
+            security::SecurityAwareLogger::instance().log(
+                security::SecurityAwareLogger::Level::Info,
+                "[MACD Update] close={} fast={} slow={} MACD={} Signal={} Hist={}",
+                close, fastEMA, slowEMA, macdLine, signalLine, histogram);
 
             lastClose = close;
             ++steps;

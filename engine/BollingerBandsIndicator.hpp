@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../core/EngineConfig.hpp"
-#include "../utils/logger.h"
+#include "../security/SecurityAwareLogger.hpp"
 
 #include "../engine/IIndicator.hpp"
 #include "../core/Candlestick.hpp"
@@ -14,9 +14,6 @@
 #include <optional>
 #include <thread>
 
-#define INFO 1
-#define WARN 2
-#define ERROR 3
 
 namespace engine {
 
@@ -98,7 +95,10 @@ namespace engine {
             stddev = std::sqrt(stddev / window.size());
 
             if (std::isnan(stddev) || std::isinf(stddev) || stddev < 1e-10) {
-                SAFE_LOG(WARN) << "[Bollinger STDDEV Anomaly] stddev=" << stddev;
+                security::SecurityAwareLogger::instance().log(
+                    security::SecurityAwareLogger::Level::Warn,
+                    "[Bollinger STDDEV Anomaly] stddev={}",
+                    stddev);
                 stddev = 0.0;
             }
 
@@ -117,13 +117,15 @@ namespace engine {
             else
                 lastSignal = "hold";
 
-            SAFE_LOG(INFO) << "[BollingerSignal] "
-                        << "version=1.0 "
-                        << "signal=" << lastSignal.value()
-                        << " thread=" << std::this_thread::get_id()
-                        << " time=" << candle.end_time;
+            security::SecurityAwareLogger::instance().log(
+                security::SecurityAwareLogger::Level::Info,
+                "[BollingerSignal] version=1.0 signal={} thread={} time={}",
+                lastSignal.value(), std::this_thread::get_id(), candle.end_time);
 
-            SAFE_LOG(INFO) << trace();
+            security::SecurityAwareLogger::instance().log(
+                security::SecurityAwareLogger::Level::Info,
+                "{}",
+                trace());
         }
 
         std::string BollingerBandsIndicator::signal() const {

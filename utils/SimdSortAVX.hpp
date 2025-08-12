@@ -5,7 +5,7 @@
 #include <vector>
 #include <algorithm>
 #include <immintrin.h>
-#include "logger.h"
+#include "../security/SecurityAwareLogger.hpp"
 
 namespace utils {
 
@@ -21,10 +21,14 @@ inline void simd_sort_desc_avx(std::vector<engine::Order>& orders) {
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 
-    SAFE_LOG(INFO) << "[SIMD Sort AVX] Used AVX2 fallback | count=" << orders.size()
-                   << " | time=" << duration.count() << "us";
+    security::SecurityAwareLogger::instance().log(
+        security::SecurityAwareLogger::Level::Info,
+        "[SIMD Sort AVX] Used AVX2 fallback | count={} | time={}us",
+        orders.size(), duration.count());
 #else
-    SAFE_LOG(WARN) << "[SIMD Sort AVX] AVX2 not supported. Falling back to std::sort.";
+    security::SecurityAwareLogger::instance().log(
+        security::SecurityAwareLogger::Level::Warn,
+        "[SIMD Sort AVX] AVX2 not supported. Falling back to std::sort.");
     std::sort(orders.begin(), orders.end(), [](const engine::Order& a, const engine::Order& b) {
         return a.price > b.price;
     });

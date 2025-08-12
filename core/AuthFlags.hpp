@@ -3,10 +3,7 @@
 #include <string>
 #include <stdexcept>
 
-#include "../utils/logger.h"
-
-#define WARN 2
-#define AUTH_LOG(level) LOG(level)
+#include "../security/SecurityAwareLogger.hpp"
 
 namespace engine {
 
@@ -33,7 +30,10 @@ namespace engine {
         if (str == "MALFORMED") return AuthFlags::MALFORMED;
         if (str == "SUSPICIOUS") return AuthFlags::SUSPICIOUS;
 
-        AUTH_LOG(WARN) << "[Invalid AuthFlags] Input: " << str << "\n";
+        security::SecurityAwareLogger::instance().log(
+            security::SecurityAwareLogger::Level::Warn,
+            "[Invalid AuthFlags] Input: {}",
+            str);
         throw std::invalid_argument("Invalid AuthFlags string: " + str);
     }
 

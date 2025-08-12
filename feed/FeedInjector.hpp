@@ -2,7 +2,7 @@
 
 #include "../core/Order.hpp"
 #include "../core/AuthFlags.hpp"
-#include "../utils/logger.h"
+#include "../security/SecurityAwareLogger.hpp"
 #include "../utils/json.hpp"
 #include "../security/FeedHashLogger.hpp"  
 #include "FeedTelemetry.hpp"
@@ -59,9 +59,10 @@ namespace feed {
 
                     telemetry_.orders_received++;
 
-                    SAFE_LOG(INFO) << "[Injected Order] tag=" << tag
-                                << " auth=" << to_string(auth)
-                                << " → " << order;
+                    security::SecurityAwareLogger::instance().log(
+                        security::SecurityAwareLogger::Level::Info,
+                        "[Injected Order] tag={} auth={} → {}",
+                        tag, to_string(auth), order.to_string());
                 }
             }
 
@@ -122,7 +123,10 @@ namespace feed {
 
                     return true;
                 } catch (...) {
-                    SAFE_LOG(WARN) << "[Injector] Malformed or missing field: " << line;
+                    security::SecurityAwareLogger::instance().log(
+                        security::SecurityAwareLogger::Level::Warn,
+                        "[Injector] Malformed or missing field: {}",
+                        line);
                     return false;
                 }
             }
