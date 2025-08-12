@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../core/EngineConfig.hpp"
-#include "../utils/logger.h"
-#include "../engine/IIndicator.hpp"
-#include "../core/Candlestick.hpp"
-#include "../utils/FixedWindow.hpp"
+#include "core/EngineConfig.hpp"
+#include "utils/logger.h"
+#include "interfaces/IIndicator.hpp"
+#include "core/Candlestick.hpp"
+#include "utils/FixedWindow.hpp"
 
 #include <cmath>
 #include <string>
