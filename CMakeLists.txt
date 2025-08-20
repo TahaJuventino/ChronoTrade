@@ -399,7 +399,13 @@ foreach(tgt ${ALL_TARGETS})
   # Skip system/external targets that might conflict
   get_target_property(tgt_type ${tgt} TYPE)
   if(NOT tgt_type STREQUAL "INTERFACE_LIBRARY")
-    
+
+    # Link all non-interface targets against OpenSSL since the
+    # SecurityAwareLogger header uses the OpenSSL SHA256 routine. Without
+    # this explicit linkage every executable that includes the header fails
+    # to link with an undefined reference to `SHA256`.
+    target_link_libraries(${tgt} PRIVATE OpenSSL::Crypto)
+
     if(ENABLE_ASAN)
       target_compile_options(${tgt} PRIVATE -fsanitize=address)
       target_link_options(${tgt} PRIVATE -fsanitize=address)
