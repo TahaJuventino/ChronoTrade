@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.15)
 project(ChronoTrade)
 
+# --- Options / toggles ---
+option(ENABLE_WERROR "Treat warnings as errors" ON)
+option(BUILD_TESTS  "Build unit tests"          ON)
+option(BUILD_TOOLS  "Build simulators/proxies"  ON)
+
 # === FAST BUILD INFRA ===
 
 # Warn if WSL builds in /mnt/c (slow disk IO)
@@ -21,49 +26,84 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_UNITY_BUILD ON CACHE BOOL "Faster incremental builds" FORCE)
 
-option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
-option(ENABLE_TSAN "Enable ThreadSanitizer" OFF)
+# Build type defaults
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
+endif()
+
+# Security options
+option(ENABLE_ASAN  "Enable AddressSanitizer"           OFF)
+option(ENABLE_TSAN  "Enable ThreadSanitizer"            OFF)
 option(ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer" OFF)
-option(ENABLE_CFI "Enable Control Flow Integrity" OFF)
+option(ENABLE_CFI   "Enable Control Flow Integrity"      OFF)
 
 find_package(Threads REQUIRED)
+find_package(GTest   REQUIRED)
+find_package(OpenSSL REQUIRED)
 
 # ========== GIT COMMIT HASH INJECTION ==========
-
 execute_process(
   COMMAND git rev-parse --short HEAD
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   OUTPUT_VARIABLE GIT_COMMIT_HASH
   OUTPUT_STRIP_TRAILING_WHITESPACE
+  ERROR_QUIET
 )
-
+if(NOT GIT_COMMIT_HASH)
+  set(GIT_COMMIT_HASH "unknown")
+endif()
 add_compile_definitions(BUILD_HASH="${GIT_COMMIT_HASH}")
 
-# ========== MAIN APP ==========
+# ========== COMPILER/LINKER FLAGS ==========
+set(HARDENING_FLAGS "")
+if (MSVC)
+  # MSVC equivalents
+  list(APPEND HARDENING_FLAGS
+    /W4 /permissive- /EHsc
+    /guard:cf         # Control Flow Guard
+    /sdl              # Additional security checks
+    /GS               # Buffer security check
+    /utf-8
+  )
+  if (ENABLE_WERROR)
+    list(APPEND HARDENING_FLAGS /WX)
+  endif()
+else()
+  # GCC/Clang
+  list(APPEND HARDENING_FLAGS
+    -Wall -Wextra -pedantic
+    -Wformat=2 -Wformat-security
+    -fstack-protector-strong
+    -D_FORTIFY_SOURCE=3
+    -fcf-protection=full
+    -fstack-clash-protection
+    -fno-omit-frame-pointer
+  )
+  if (ENABLE_WERROR)
+    list(APPEND HARDENING_FLAGS -Werror)
+  endif()
+  # Linker hardening (ELF)
+  if (UNIX AND NOT APPLE)
+    add_link_options(-Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack -pie)
+  endif()
+endif()
 
+# ========== MAIN APP ==========
 file(GLOB_RECURSE CORE_SRC CONFIGURE_DEPENDS
     "core/*.cpp" "engine/*.cpp"
     "feed/*.cpp" "feed/*/*.cpp"
     "threads/*.cpp" "plot/*.cpp" "strategy/*.cpp"
     "event/*.cpp" "security/*.cpp" "utils/*.cpp"
 )
-
-# ⛔️ REMOVE simulator from ChronoTrade build
+# Remove simulator and proxy from main build
 list(FILTER CORE_SRC EXCLUDE REGEX "feed/simulators/.*")
 list(FILTER CORE_SRC EXCLUDE REGEX "feed/TCPLatencyProxy.cpp")
 
 add_executable(ChronoTrade ${CORE_SRC} main.cpp)
-
-target_compile_options(ChronoTrade PRIVATE
-  -Wall -Wextra -Werror -pedantic
-  -Wformat=2 -Wformat-security -Wstack-protector
-  -fstack-protector-strong -D_FORTIFY_SOURCE=3
-  -fcf-protection=full -fstack-clash-protection
-  -fno-omit-frame-pointer
-)
-
-target_link_libraries(ChronoTrade PRIVATE Threads::Threads)
-
+target_compile_options(ChronoTrade PRIVATE ${HARDENING_FLAGS})
+target_link_libraries(ChronoTrade PRIVATE Threads::Threads OpenSSL::Crypto)
 target_include_directories(ChronoTrade PRIVATE
   ${PROJECT_SOURCE_DIR}/feed
   ${PROJECT_SOURCE_DIR}/core
@@ -72,367 +112,216 @@ target_include_directories(ChronoTrade PRIVATE
   ${PROJECT_SOURCE_DIR}/observability
   ${PROJECT_SOURCE_DIR}/threads
 )
-
 add_compile_definitions(ENABLE_LOGS=0) # Disable logs by default
 
-# ========== GTEST-BASED TESTS ==========
+# ========== TESTS ==========
+if (BUILD_TESTS)
+  enable_testing()
+  add_compile_definitions(PANIC_THROWS_IN_TESTS=1)
 
-# Find GoogleTest if available (MSYS2: pacman -S mingw-w64-x86_64-gtest)
-find_package(GTest REQUIRED)
-
-# ---- Order Tests ----
-add_executable(test_order tests/test_order.cpp)
-target_link_libraries(test_order PRIVATE GTest::gtest GTest::gtest_main)
-target_include_directories(test_order PRIVATE 
-    ${PROJECT_SOURCE_DIR}/core
-)
-
-# ---- Feed Parser Tests ----
-add_executable(test_csv_parser tests/test_csv_parser.cpp)
-target_link_libraries(test_csv_parser PRIVATE GTest::gtest GTest::gtest_main)
-target_include_directories(test_csv_parser PRIVATE 
-    ${PROJECT_SOURCE_DIR}/core 
-    ${PROJECT_SOURCE_DIR}/feed
-)
-
-# ---- Candlestick Core + Advanced ----
-add_executable(test_candlestick tests/test_candlestick.cpp)
-target_link_libraries(test_candlestick PRIVATE GTest::gtest GTest::gtest_main)
-target_include_directories(test_candlestick PRIVATE 
-    ${PROJECT_SOURCE_DIR}/core
-)
-
-# ---- OrderBook Threaded Container ----
-add_executable(test_orderbook tests/test_orderbook.cpp)
-target_link_libraries(test_orderbook PRIVATE GTest::gtest GTest::gtest_main)
-target_include_directories(test_orderbook PRIVATE 
-    ${PROJECT_SOURCE_DIR}/core
-)
-
-# ---- Candle Generator Sliding Window ----
-add_executable(test_candlestick_generator tests/test_candlestick_generator.cpp)
-target_link_libraries(test_candlestick_generator PRIVATE GTest::gtest GTest::gtest_main)
-target_include_directories(test_candlestick_generator PRIVATE 
-    ${PROJECT_SOURCE_DIR}/core 
-    ${PROJECT_SOURCE_DIR}/engine
-)
-
-## ---- SMA Indicator Tests ----
-add_executable(test_sma_indicator tests/test_sma_indicator.cpp)
-target_link_libraries(test_sma_indicator PRIVATE GTest::gtest_main)
-target_include_directories(test_sma_indicator PRIVATE 
-    ${PROJECT_SOURCE_DIR}/core 
-    ${PROJECT_SOURCE_DIR}/engine 
-    ${PROJECT_SOURCE_DIR}/utils
-)
-
-# ---- Fixed Window Tests ----
-add_executable(test_fixed_window tests/test_fixed_window.cpp)
-target_link_libraries(test_fixed_window PRIVATE GTest::gtest_main)
-target_include_directories(test_fixed_window PRIVATE 
-    ${PROJECT_SOURCE_DIR}/core 
-    ${PROJECT_SOURCE_DIR}/engine
-)
-
-# ---- RSI Indicator Tests ----
-add_executable(test_rsi_indicator tests/test_rsi_indicator.cpp)
-target_link_libraries(test_rsi_indicator PRIVATE GTest::gtest_main)
-target_include_directories(test_rsi_indicator PRIVATE 
-    ${PROJECT_SOURCE_DIR}/core 
-    ${PROJECT_SOURCE_DIR}/engine 
-    ${PROJECT_SOURCE_DIR}/utils
-)
-
-# ---- MACD Indicator Tests ----
-add_executable(test_macd_indicator tests/test_macd_indicator.cpp)
-target_link_libraries(test_macd_indicator PRIVATE GTest::gtest_main)
-target_include_directories(test_macd_indicator PRIVATE 
-    ${PROJECT_SOURCE_DIR}/core 
-    ${PROJECT_SOURCE_DIR}/engine
-)
-
-# ---- Bollinger Bands Tests ----
-add_executable(test_bollinger_indicator tests/test_bollinger_indicator.cpp)
-target_link_libraries(test_bollinger_indicator PRIVATE GTest::gtest_main)
-target_include_directories(test_bollinger_indicator PRIVATE 
-    ${PROJECT_SOURCE_DIR}/core 
-    ${PROJECT_SOURCE_DIR}/engine 
-    ${PROJECT_SOURCE_DIR}/utils
-)
-
-# ---- Indicator Registry Tests ----
-add_executable(test_indicator_registry tests/test_indicator_registry.cpp)
-target_link_libraries(test_indicator_registry PRIVATE GTest::gtest_main)
-target_include_directories(test_indicator_registry PRIVATE 
-    ${PROJECT_SOURCE_DIR}/core 
-    ${PROJECT_SOURCE_DIR}/engine
-)
-
-# ---- Loop Processor Tests ----
-add_executable(test_loop_processor tests/test_loop_processor.cpp)
-target_link_libraries(test_loop_processor PRIVATE GTest::gtest_main)
-target_include_directories(test_loop_processor PRIVATE 
-    ${PROJECT_SOURCE_DIR}/core 
-    ${PROJECT_SOURCE_DIR}/engine
-)
-
-# ---- Arena Allocator Tests ----
-add_executable(test_arena_allocator tests/test_arena_allocator.cpp)
-target_link_libraries(test_arena_allocator PRIVATE GTest::gtest_main)
-target_include_directories(test_arena_allocator PRIVATE 
-    ${PROJECT_SOURCE_DIR}/utils
-)
-
-# ---- SIMD Sort Tests ----
-add_executable(test_simd_sort tests/test_simd_sort.cpp)
-target_link_libraries(test_simd_sort PRIVATE GTest::gtest_main)
-target_include_directories(test_simd_sort PRIVATE 
-    ${PROJECT_SOURCE_DIR}/core 
-    ${PROJECT_SOURCE_DIR}/utils
-)
-
-# ---- OrderBook Arena Tests ----
-add_executable(test_orderbook_arena tests/test_orderbook_arena.cpp)
-target_link_libraries(test_orderbook_arena PRIVATE GTest::gtest_main)
-target_include_directories(test_orderbook_arena PRIVATE 
-    ${PROJECT_SOURCE_DIR}/core 
-    ${PROJECT_SOURCE_DIR}/utils
-)
-target_compile_options(test_orderbook_arena PRIVATE -fexceptions)
-
-# ---- IIndicator Mock Tests ----
-add_executable(test_iindicator_mock tests/test_iindicator_mock.cpp)
-target_link_libraries(test_iindicator_mock PRIVATE GTest::gtest_main)
-target_include_directories(test_iindicator_mock PRIVATE 
-    ${PROJECT_SOURCE_DIR}/core 
-    ${PROJECT_SOURCE_DIR}/engine
-)
-
-# ---- Feed Manager Tests ----
-add_executable(test_feed_manager tests/test_feed_manager.cpp)
-
-target_include_directories(test_feed_manager PRIVATE 
-    ${PROJECT_SOURCE_DIR}
-    ${PROJECT_SOURCE_DIR}/feed
-    ${PROJECT_SOURCE_DIR}/external
-)
-
-target_link_libraries(test_feed_manager 
-  PRIVATE 
-    GTest::gtest_main
-    OpenSSL::Crypto
-)
-
-
-# ---- CSV FeedSource Tests ----
-add_executable(test_csv_feedsource tests/test_csv_feedsource.cpp)
-
-target_include_directories(test_csv_feedsource PRIVATE 
-    ${PROJECT_SOURCE_DIR}
-    ${PROJECT_SOURCE_DIR}/feed
-    ${PROJECT_SOURCE_DIR}/external
-)
-
-target_link_libraries(test_csv_feedsource 
-  PRIVATE 
-    GTest::gtest_main
-    OpenSSL::Crypto
-)
-
-
-# ---- Indicator Tests ----
-add_executable(test_indicators tests/test_indicators.cpp)
-target_link_libraries(test_indicators gtest gtest_main pthread)
-target_include_directories(test_indicators PRIVATE 
-    ${PROJECT_SOURCE_DIR}
-)
-
-# ---- SIMD Sort Benchmark Tests ----
-add_executable(test_simd_sort_benchmark tests/test_simd_sort_benchmark.cpp)
-target_link_libraries(test_simd_sort_benchmark PRIVATE GTest::gtest GTest::gtest_main)
-target_include_directories(test_simd_sort_benchmark PRIVATE 
-    ${PROJECT_SOURCE_DIR}/core 
-    ${PROJECT_SOURCE_DIR}/utils
-    )
-
-# ---- Feed Injector Tests ----
-add_executable(test_feed_redteam_injection tests/test_feed_redteam_injection.cpp)
-
-target_include_directories(test_feed_redteam_injection PRIVATE 
-    ${PROJECT_SOURCE_DIR}
-    ${PROJECT_SOURCE_DIR}/feed
-    ${PROJECT_SOURCE_DIR}/external
-)
-
-target_link_libraries(test_feed_redteam_injection 
-  PRIVATE 
-    GTest::gtest_main
-    OpenSSL::Crypto
-)
-
-# ---- SocketFeedSource Tests ----
-if(UNIX AND NOT WIN32)
-  add_executable(test_socket_feedsource tests/test_socket_feedsource.cpp)
-
-  target_link_libraries(test_socket_feedsource PRIVATE GTest::gtest_main)
-  target_include_directories(test_socket_feedsource PRIVATE 
-    ${PROJECT_SOURCE_DIR}
-    ${PROJECT_SOURCE_DIR}/feed
-    ${PROJECT_SOURCE_DIR}/external
-  )
-endif()
-
-# ---- FeedHashLogger Tests ----
-add_executable(test_feed_hashlogger tests/test_feed_hashlogger.cpp)
-
-target_include_directories(test_feed_hashlogger PRIVATE 
-    ${PROJECT_SOURCE_DIR}
-    ${PROJECT_SOURCE_DIR}/feed
-    ${PROJECT_SOURCE_DIR}/external
-)
-
-# Find OpenSSL if available (MSYS2: pacman -S mingw-w64-x86_64-openssl)
-find_package(OpenSSL REQUIRED)
-
-target_link_libraries(test_feed_hashlogger 
-  PRIVATE 
-    GTest::gtest_main
-    OpenSSL::Crypto
-)
-
-# ---- Shared Memory FeedSource Tests ----
-if(UNIX)
-  add_executable(test_shm_feedsource tests/test_shm_feedsource.cpp)
-
-  target_include_directories(test_shm_feedsource PRIVATE 
+  # Helper to define & register a gtest binary with CTest
+  function(add_test_target name source)
+    add_executable(${name} ${source})
+    target_link_libraries(${name} PRIVATE GTest::gtest_main OpenSSL::Crypto)
+    target_include_directories(${name} PRIVATE 
       ${PROJECT_SOURCE_DIR}
+      ${PROJECT_SOURCE_DIR}/core
+      ${PROJECT_SOURCE_DIR}/engine
       ${PROJECT_SOURCE_DIR}/feed
+      ${PROJECT_SOURCE_DIR}/utils
       ${PROJECT_SOURCE_DIR}/external
-  )
+    )
+    target_compile_options(${name} PRIVATE ${HARDENING_FLAGS})
+    add_test(NAME ${name} COMMAND ${name})
+  endfunction()
 
-  target_link_libraries(test_shm_feedsource 
-    PRIVATE 
-      GTest::gtest_main
-      OpenSSL::Crypto
-      Threads::Threads
-  )
-endif()
+  # Core tests
+  add_test_target(test_order tests/test_order.cpp)
+  add_test_target(test_csv_parser tests/test_csv_parser.cpp)
+  add_test_target(test_candlestick tests/test_candlestick.cpp)
+  add_test_target(test_orderbook tests/test_orderbook.cpp)
+  add_test_target(test_candlestick_generator tests/test_candlestick_generator.cpp)
+  add_test_target(test_sma_indicator tests/test_sma_indicator.cpp)
+  add_test_target(test_fixed_window tests/test_fixed_window.cpp)
+  add_test_target(test_rsi_indicator tests/test_rsi_indicator.cpp)
+  add_test_target(test_macd_indicator tests/test_macd_indicator.cpp)
+  add_test_target(test_bollinger_indicator tests/test_bollinger_indicator.cpp)
+  add_test_target(test_indicator_registry tests/test_indicator_registry.cpp)
+  add_test_target(test_loop_processor tests/test_loop_processor.cpp)
+  add_test_target(test_arena_allocator tests/test_arena_allocator.cpp)
+  add_test_target(test_simd_sort tests/test_simd_sort.cpp)
+  add_test_target(test_orderbook_arena tests/test_orderbook_arena.cpp)
+  add_test_target(test_iindicator_mock tests/test_iindicator_mock.cpp)
+  add_test_target(test_csv_feedsource tests/test_csv_feedsource.cpp)
+  add_test_target(test_indicators tests/test_indicators.cpp)
+  add_test_target(test_simd_sort_benchmark tests/test_simd_sort_benchmark.cpp)
+  add_test_target(test_feed_redteam_injection tests/test_feed_redteam_injection.cpp)
+  add_test_target(test_feed_hashlogger tests/test_feed_hashlogger.cpp)
+  add_test_target(test_security_macros tests/test_security_macros.cpp)
+  add_test_target(test_zero_copy_csv_parser tests/test_zero_copy_csv_parser.cpp)
 
-# ---- SHM Writer Simulator ----
-add_executable(shm_writer_simulator feed/simulators/shm_writer_simulator.cpp)
+  # Special test configurations
+  target_compile_options(test_orderbook_arena PRIVATE -fexceptions)
+  target_link_libraries(test_indicators PRIVATE Threads::Threads)
 
-target_include_directories(shm_writer_simulator PRIVATE 
+  # Feed Manager test (has unused variable warning)
+  add_test_target(test_feed_manager tests/test_feed_manager.cpp)
+  target_compile_options(test_feed_manager PRIVATE -Wno-error=unused-variable)
+
+  # Zero-copy parser hardened build
+  if(CMAKE_BUILD_TYPE MATCHES Debug)
+    target_compile_options(test_zero_copy_csv_parser PRIVATE -fsanitize=address,undefined -fno-omit-frame-pointer -g3)
+    target_link_options(test_zero_copy_csv_parser PRIVATE -fsanitize=address,undefined)
+  endif()
+
+  # Unix-specific tests
+  if(UNIX AND NOT WIN32)
+    add_test_target(test_socket_feedsource tests/test_socket_feedsource.cpp)
+  endif()
+  if(UNIX)
+    add_test_target(test_shm_feedsource tests/test_shm_feedsource.cpp)
+    target_link_libraries(test_shm_feedsource PRIVATE Threads::Threads)
+  endif()
+
+  # TCP Latency Proxy test
+  add_executable(test_tcp_latency_proxy tests/test_tcp_latency_proxy.cpp)
+  target_link_libraries(test_tcp_latency_proxy PRIVATE GTest::gtest_main Threads::Threads)
+  target_include_directories(test_tcp_latency_proxy PRIVATE 
     ${PROJECT_SOURCE_DIR}
-    ${PROJECT_SOURCE_DIR}/feed
-    ${PROJECT_SOURCE_DIR}/core
-)
-
-# ---- TCPLatencyProxy ----
-add_executable(tcp_latency_proxy feed/TCPLatencyProxy.cpp)
-target_link_libraries(tcp_latency_proxy PRIVATE Threads::Threads)
-target_include_directories(tcp_latency_proxy PRIVATE 
     ${PROJECT_SOURCE_DIR}/feed
     ${PROJECT_SOURCE_DIR}/core
     ${PROJECT_SOURCE_DIR}/utils
-)
+  )
+  target_compile_options(test_tcp_latency_proxy PRIVATE ${HARDENING_FLAGS})
+  add_test(NAME test_tcp_latency_proxy COMMAND test_tcp_latency_proxy)
 
-# ---- TcpLatencyProxyTest ----
-add_executable(test_tcp_latency_proxy tests/test_tcp_latency_proxy.cpp)
-target_link_libraries(test_tcp_latency_proxy 
-    PRIVATE 
-    GTest::gtest_main 
-    Threads::Threads
-)
+  # ========== ENSURE CRYPTO LINKING FOR REMAINING TESTS ==========
+  # Force OpenSSL::Crypto for tests that need CryptoHasher/SHA256 but may have lost it
+  set(TESTS_NEED_CRYPTO
+    test_loop_processor
+    test_simd_sort
+    test_bollinger_indicator
+    test_indicator_registry
+    test_orderbook
+    test_orderbook_arena
+    test_candlestick_generator
+  )
 
-# ---- ZeroCopyCsvParser Tests ----
-add_executable(test_zero_copy_csv_parser
-    tests/test_zero_copy_csv_parser.cpp
-)
+  foreach(tgt IN LISTS TESTS_NEED_CRYPTO)
+    if (TARGET ${tgt})
+      target_link_libraries(${tgt} PRIVATE OpenSSL::Crypto)
+      message(STATUS "Force-linked OpenSSL::Crypto to ${tgt}")
+    endif()
+  endforeach()
+endif() # BUILD_TESTS
 
-target_link_libraries(test_zero_copy_csv_parser 
-    PRIVATE 
-    GTest::gtest_main
-)
-
-target_include_directories(test_zero_copy_csv_parser PRIVATE 
-    ${CMAKE_SOURCE_DIR}
-    ${CMAKE_SOURCE_DIR}/feed
-)
-
-# Enable sanitizers for security testing
-if(CMAKE_BUILD_TYPE MATCHES Debug)
-    target_compile_options(test_zero_copy_csv_parser PRIVATE 
-        -fsanitize=address,undefined
-        -fno-omit-frame-pointer
-        -g3
-    )
-    target_link_options(test_zero_copy_csv_parser PRIVATE 
-        -fsanitize=address,undefined
-    )
-endif()
-
-target_include_directories(test_zero_copy_csv_parser PRIVATE 
+# ========== SIMULATORS & UTILITIES ==========
+if (BUILD_TOOLS)
+  add_executable(shm_writer_simulator feed/simulators/shm_writer_simulator.cpp)
+  target_include_directories(shm_writer_simulator PRIVATE 
     ${PROJECT_SOURCE_DIR}
     ${PROJECT_SOURCE_DIR}/feed
-)
-# Replace the conflicted section (lines ~380-420) with this:
+    ${PROJECT_SOURCE_DIR}/core
+  )
 
-target_compile_options(test_zero_copy_csv_parser PRIVATE
-    -Wall -Wextra -Werror
-    -Wformat=2 -Wformat-security -Wstack-protector
-    -fstack-protector-strong -D_FORTIFY_SOURCE=3
-    -fcf-protection=full -fstack-clash-protection
-)
-
-# ---- Security Macros Tests ----
-add_executable(test_security_macros tests/test_security_macros.cpp)
-target_link_libraries(test_security_macros PRIVATE GTest::gtest_main)
-target_include_directories(test_security_macros PRIVATE
-    ${PROJECT_SOURCE_DIR}/tests
-)
+  add_executable(tcp_latency_proxy feed/TCPLatencyProxy.cpp)
+  target_link_libraries(tcp_latency_proxy PRIVATE Threads::Threads)
+  target_include_directories(tcp_latency_proxy PRIVATE 
+    ${PROJECT_SOURCE_DIR}/feed
+    ${PROJECT_SOURCE_DIR}/core
+    ${PROJECT_SOURCE_DIR}/utils
+  )
+  target_compile_options(shm_writer_simulator PRIVATE ${HARDENING_FLAGS})
+  target_compile_options(tcp_latency_proxy     PRIVATE ${HARDENING_FLAGS})
+endif()
 
 # ========== PROJECT-WIDE SANITIZER APPLICATION ==========
-# Apply sanitizer options to all targets for comprehensive security testing
 get_property(ALL_TARGETS DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY BUILDSYSTEM_TARGETS)
-
 foreach(tgt ${ALL_TARGETS})
-  # Skip system/external targets that might conflict
   get_target_property(tgt_type ${tgt} TYPE)
   if(NOT tgt_type STREQUAL "INTERFACE_LIBRARY")
-
-    # Link all non-interface targets against OpenSSL since the
-    # SecurityAwareLogger header uses the OpenSSL SHA256 routine. Without
-    # this explicit linkage every executable that includes the header fails
-    # to link with an undefined reference to `SHA256`.
-    target_link_libraries(${tgt} PRIVATE OpenSSL::Crypto)
-
+    
     if(ENABLE_ASAN)
-      target_compile_options(${tgt} PRIVATE -fsanitize=address)
+      target_compile_options(${tgt} PRIVATE -fsanitize=address -fno-omit-frame-pointer)
       target_link_options(${tgt} PRIVATE -fsanitize=address)
     endif()
-    
     if(ENABLE_TSAN)
       target_compile_options(${tgt} PRIVATE -fsanitize=thread)
       target_link_options(${tgt} PRIVATE -fsanitize=thread)
     endif()
-    
     if(ENABLE_UBSAN)
       target_compile_options(${tgt} PRIVATE -fsanitize=undefined)
       target_link_options(${tgt} PRIVATE -fsanitize=undefined)
     endif()
-    
-    if(ENABLE_CFI)
+    if(ENABLE_CFI AND CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_BUILD_TYPE MATCHES "Release")
       target_compile_options(${tgt} PRIVATE -fsanitize=cfi -fvisibility=hidden -flto)
       target_link_options(${tgt} PRIVATE -fsanitize=cfi -fvisibility=hidden -flto)
     endif()
   endif()
 endforeach()
 
-# ========== HARDENING VALIDATION ==========
+# ========== BUILD VALIDATION & STATUS ==========
+message(STATUS "")
+message(STATUS "=== ChronoTrade Build Configuration ===")
+message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "C++ Standard: ${CMAKE_CXX_STANDARD}")
+message(STATUS "Git Hash: ${GIT_COMMIT_HASH}")
+message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
+message(STATUS "")
+message(STATUS "Build Options:")
+message(STATUS "  BUILD_TESTS: ${BUILD_TESTS}")
+message(STATUS "  BUILD_TOOLS: ${BUILD_TOOLS}")
+message(STATUS "  ENABLE_WERROR: ${ENABLE_WERROR}")
+message(STATUS "  Unity builds: ${CMAKE_UNITY_BUILD}")
+message(STATUS "")
 message(STATUS "Security Configuration:")
 message(STATUS "  ASAN: ${ENABLE_ASAN}")
 message(STATUS "  TSAN: ${ENABLE_TSAN}")  
 message(STATUS "  UBSAN: ${ENABLE_UBSAN}")
 message(STATUS "  CFI: ${ENABLE_CFI}")
-message(STATUS "  Fortify: D_FORTIFY_SOURCE=3")
-message(STATUS "  Stack Protection: -fstack-protector-strong + clash protection")
+if(MSVC)
+  message(STATUS "  MSVC: /guard:cf /sdl /GS")
+else()
+  message(STATUS "  GCC/Clang: FORTIFY_SOURCE=3, stack protection, CFI")
+  if(UNIX AND NOT APPLE)
+    message(STATUS "  Linker: RELRO, NOW, noexecstack, PIE")
+  endif()
+endif()
+message(STATUS "")
+if(CCACHE_PROGRAM)
+  message(STATUS "Acceleration: ccache enabled")
+else()
+  message(STATUS "Acceleration: ccache not found (install for faster rebuilds)")
+endif()
+message(STATUS "")
+
+# ========== CUSTOM TARGETS ==========
+if(BUILD_TESTS)
+  # Fast test runner (core tests only)
+  add_custom_target(test-fast
+    COMMAND ${CMAKE_CTEST_COMMAND} -R "test_(order|candlestick|orderbook|sma|rsi)$$" --output-on-failure
+    DEPENDS test_order test_candlestick test_orderbook test_sma_indicator test_rsi_indicator
+    COMMENT "Running core tests (fast subset)"
+  )
+
+  # Security-focused test runner
+  add_custom_target(test-security
+    COMMAND ${CMAKE_CTEST_COMMAND} -R "test_(security|feed_redteam|zero_copy)" --output-on-failure
+    DEPENDS test_security_macros test_feed_redteam_injection test_zero_copy_csv_parser
+    COMMENT "Running security-focused tests"
+  )
+
+  # All tests runner
+  add_custom_target(test-all
+    COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
+    COMMENT "Running all registered tests"
+  )
+endif()
+
+# Clean build artifacts
+add_custom_target(clean-all
+  COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target clean
+  COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_BINARY_DIR}/CMakeFiles
+  COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/CMakeCache.txt
+  COMMENT "Deep clean of build artifacts"
+)

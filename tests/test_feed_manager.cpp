@@ -738,6 +738,7 @@ TEST(FeedManagerTest, TimestampOrderRaceValidator) {
     manager.stop_all();
 
     int64_t last_ts = 0;
+    (void)last_ts; // silence -Werror if not used in this TU
     bool in_order = true;
 
     std::vector<engine::Order> orders;  // move this up

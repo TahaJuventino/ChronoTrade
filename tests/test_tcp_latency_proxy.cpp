@@ -531,10 +531,14 @@ TEST_F(TcpLatencyProxyTest, PacketChaos) {
     
     auto message_counts = upstream_server_->get_message_counts();
     auto total_received = upstream_server_->message_count();
-    
+    (void)total_received; // only used for debugging/logging in some builds
+
+    int expected_minimum = static_cast<int>(MESSAGE_COUNT * 0.5);
+
     // With 30% drop, expect roughly 70% to arrive
     EXPECT_GE(message_counts.size(), static_cast<size_t>(MESSAGE_COUNT * 0.5));
-    
+    EXPECT_GE(total_received, expected_minimum);
+
     // With 20% dup rate, expect some duplicates
     size_t duplicates = 0;
     for (const auto& pair : message_counts) {

@@ -108,7 +108,7 @@ TEST(FeedHashLoggerTest, LogsMultiplePacketsAppendsCorrectly) {
     };
 
     std::vector<std::string> tags;
-    for (int i = 0; i < packets.size(); ++i) {
+    for (size_t i = 0; i < packets.size(); ++i) {
         std::string tag = "SRC_MULTI_" + std::to_string(i);
         std::string hash = FeedHashLogger::compute_sha256(packets[i]);
         FeedHashLogger::log_packet(packets[i], hash, tag);
